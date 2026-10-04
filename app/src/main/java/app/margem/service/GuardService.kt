@@ -56,7 +56,6 @@ class GuardService : AccessibilityService() {
 
     override fun onServiceConnected() {
         Margem.init(this)
-        running = true
         overlay = Overlay(this)
         text = TextDetector(assets.open("blocklist.txt").bufferedReader().use { it.readText() })
         val imes = getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.packageName }
@@ -80,7 +79,6 @@ class GuardService : AccessibilityService() {
     override fun onInterrupt() {}
 
     override fun onDestroy() {
-        running = false
         imageReady = false
         main.removeCallbacksAndMessages(null)
         if (::overlay.isInitialized) overlay.hide()
@@ -216,8 +214,6 @@ class GuardService : AccessibilityService() {
 
     companion object {
         private const val CHANNEL = "status"
-        @Volatile var running = false
-            private set
         @Volatile var imageReady = false
             private set
     }
