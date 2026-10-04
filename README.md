@@ -70,7 +70,7 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 |---|---|
 | `PolicyTest` | Avisos sem bloqueio; 4ª → 30 s, 5ª → 1 min, 6ª → 2 min; crescimento; teto nunca ultrapassado; limiares de sensibilidade |
 | `GuardTest` | Contador 1→2→3; progressão; bloqueio ativo não conta de novo; carência e retorno; **reset `2026-10-04 23:59` (tentativa 8) → `2026-10-05 00:01` (contador 0)**; bloqueio que atravessa a meia-noite; **recuperação após matar o processo e após reboot**; **relógio adiantado/atrasado** sem reset nem bloqueio encurtado; fuso para oeste; teto; ajuste mudado no meio do dia; estado corrompido; histórico com lacunas |
-| `TextDetectorTest` | Domínios e subdomínios, buscas, termos com acento; falsos positivos ("Essex", "CPF xxx.xxx", "educação sexual", "batom nude") |
+| `UrlDetectorTest` | Domínios e subdomínios; palavras soltas e buscas **não** disparam ("nsfw", "pornô", `google.com/search?q=…`); falsos positivos ("Essex", "CPF xxx.xxx"); IDs de barra de endereço dos navegadores |
 | `FormatTest` | Durações, contador regressivo, textos do painel, dias da semana em pt-BR |
 | `ImageDetectorTest` (aparelho) | Modelo carrega, saída tem 5 probabilidades, tela neutra não é adulta (com bitmap `HARDWARE`, como no screenshot real) |
 
@@ -78,7 +78,7 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 
 ```
 GuardService (AccessibilityService): único ponto de integração com o sistema
- ├─ eventos de janela/conteúdo ─► TextDetector (árvore de acessibilidade × lista local)
+ ├─ eventos de janela/conteúdo ─► UrlDetector (só a barra de endereço dos navegadores × lista local)
  ├─ throttle ─► takeScreenshot ─► ImageDetector (LiteRT)   [bitmap só em memória]
  ├─ detecção positiva ─► Guard.onDetection(pkg) ─► Warn(n) | Block | Ignore
  └─ Overlay (TYPE_ACCESSIBILITY_OVERLAY; sem permissão de sobreposição)
@@ -87,7 +87,7 @@ GuardService (AccessibilityService): único ponto de integração com o sistema
 | Pacote | Responsabilidade |
 |---|---|
 | `core` | Regras em Kotlin puro, sem Android: `Policy`, `getBlockDuration`, `Guard` (tentativas, bloqueios, reset diário, relógio confiável, serialização) |
-| `detect` | `ContentDetector`/`ScreenFrame` e as duas implementações: `TextDetector` e `ImageDetector` |
+| `detect` | `ContentDetector`/`ScreenFrame` e as duas implementações: `UrlDetector` e `ImageDetector` |
 | `data` | `Store`: SharedPreferences para o estado do `Guard` e os ajustes |
 | `service` | `GuardService` (eventos, screenshots, decisões, notificação) e `Overlay` (janela Compose sobre os outros apps) |
 | `ui` | Tema, onboarding, telas Hoje/Semana/Ajustes, overlays de aviso e de bloqueio |
@@ -98,17 +98,19 @@ Não há máquina de estados explícita. Os estados IDLE → WARNING_n → BLOCK
 
 Os dois detectores implementam `ContentDetector`. Para criar um novo método, basta escrever uma nova implementação; o serviço não muda.
 
-**TextDetector** (barato, instantâneo)
-- Roda a cada evento de janela/conteúdo do app em primeiro plano, no máximo um a cada 300 ms (`notificationTimeout`).
-- Lê `text` e `contentDescription` da janela ativa, até 300 nós ou 5 mil caracteres. Isso inclui a barra de endereço de qualquer navegador e o texto de buscas.
-- Normaliza o texto (minúsculas, sem acentos) e compara com `assets/blocklist.txt`, que tem domínios, trechos de host e termos explícitos com fronteira de palavra. Termos ambíguos ("sexo", "nude") não disparam sozinhos.
+**UrlDetector** (barato, instantâneo)
+- **Palavras nunca disparam.** Qualquer pessoa pode escrever "nsfw" numa mensagem; o app só reage a um site adulto aberto ou a uma imagem adulta na tela.
+- Roda só em navegadores (apps instalados que abrem links `https`), no máximo um evento a cada 500 ms (`notificationTimeout`).
+- Lê apenas a barra de endereço, achada pelo ID da view (`url_bar`, `location_bar`, `omnibar`…; serviço com `flagReportViewIds`). Mensagens, posts e o conteúdo das páginas não são lidos.
+- Extrai só o host e compara com `assets/blocklist.txt` (domínios e trechos de nome de site). Caminho e busca (`?q=…`) não contam.
+- Limites: navegadores embutidos em outros apps (Instagram, por exemplo) não têm o endereço reconhecido, e buscas não disparam; nos dois casos vale o detector de imagem.
 
 **ImageDetector** (pega imagens sem texto)
-- Roda quando o texto não detectou nada, no máximo uma vez a cada 2 s, e a cada 5 s enquanto o mesmo app continua aberto (vídeo não gera eventos).
+- Roda em qualquer app (e nos navegadores quando o endereço não é adulto), no máximo uma vez a cada 2 s, e a cada 5 s enquanto o mesmo app continua aberto (vídeo não gera eventos).
 - Nunca roda com a tela desligada ou bloqueada, nem no launcher, no teclado, na System UI ou no próprio app.
 - `AccessibilityService.takeScreenshot` → bitmap reduzido para 224×224 → MobileNetV2 ([nsfw_model](https://github.com/GantMan/nsfw_model)) → 5 probabilidades (drawings, hentai, neutral, porn, sexy). O bitmap é descartado logo em seguida.
 - Sensibilidade: Baixa `porn+hentai ≥ 0,85` · Média `≥ 0,70` · Alta `porn+hentai+0,5·sexy ≥ 0,60`.
-- Janelas protegidas (FLAG_SECURE, como apps de banco) recusam o screenshot. Nesses casos vale só o texto.
+- Janelas protegidas (FLAG_SECURE, como apps de banco) recusam o screenshot. Nesses casos vale só o endereço, quando é um navegador.
 
 **Bateria**: cada inferência custa ~30–60 ms de CPU. A medição real no aparelho (`dumpsys batterystats`) ainda está **pendente**: será registrada aqui depois da sessão de validação no dispositivo.
 
@@ -116,7 +118,7 @@ Os dois detectores implementam `ContentDetector`. Para criar um novo método, ba
 
 | Permissão | Para quê | O que **não** faz |
 |---|---|---|
-| Serviço de acessibilidade (obrigatória) | Ler o texto da janela ativa, tirar screenshots em memória e desenhar os avisos/bloqueios por cima dos apps | Não grava nada, não envia nada, não lê notificações nem senhas (campos de senha não expõem texto) |
+| Serviço de acessibilidade (obrigatória) | Ler a barra de endereço dos navegadores, tirar screenshots em memória e desenhar os avisos/bloqueios por cima dos apps | Não grava nada, não envia nada, não lê notificações nem senhas (campos de senha não expõem texto) |
 | Notificações (opcional, Android 13+) | Avisar que um bloqueio terminou | Nunca cita o motivo do bloqueio |
 
 O Free Yourself **não declara**: `INTERNET`, sobreposição (`SYSTEM_ALERT_WINDOW`), armazenamento, serviço em primeiro plano ou inicialização no boot. As permissões de serviço em primeiro plano que o LiteRT declara são removidas no manifest.
