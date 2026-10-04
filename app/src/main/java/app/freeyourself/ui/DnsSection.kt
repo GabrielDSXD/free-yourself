@@ -44,7 +44,7 @@ fun DnsSection(resumes: Int) {
             "não o conteúdo; as imagens continuam com a análise do Free Yourself.",
         style = MaterialTheme.typography.bodyMedium, color = muted,
     )
-    Options("Provedor", DnsProvider.entries.map { it to it.label }, store.dnsProvider) { store.dnsProvider = it }
+    Options("Provedor", DnsProvider.entries.map { it to it.label.substringBefore(' ') }, store.dnsProvider) { store.dnsProvider = it }
     StatRow("Status", status.label())
 
     val host = store.dnsProvider.host
