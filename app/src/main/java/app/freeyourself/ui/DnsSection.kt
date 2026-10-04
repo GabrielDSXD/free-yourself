@@ -58,8 +58,9 @@ fun DnsSection(resumes: Int) {
     if (status !is DnsStatus.Filtering) {
         Spacer(Modifier.height(8.dp))
         Text(
-            "O endereço $host vai para a área de transferência. Na tela que abrir: toque em DNS privado " +
-                "(em alguns aparelhos fica em Avançado), escolha Nome do host do provedor, cole e toque em Salvar.",
+            "O endereço $host vai para a área de transferência. Na tela que abrir, toque em DNS privado " +
+                "(na Samsung: Mais configurações de conexão → DNS privado; em outros aparelhos pode estar em Avançado), " +
+                "escolha Nome do host do provedor, cole e toque em Salvar.",
             style = MaterialTheme.typography.bodyMedium, color = muted,
         )
     }
