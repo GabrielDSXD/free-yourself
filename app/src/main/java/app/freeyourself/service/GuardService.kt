@@ -7,9 +7,11 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
@@ -23,9 +25,9 @@ import app.freeyourself.FreeYourself
 import app.freeyourself.R
 import app.freeyourself.core.Decision
 import app.freeyourself.detect.ImageDetector
-import app.freeyourself.detect.ScreenFrame
 import app.freeyourself.ui.BlockOverlay
 import app.freeyourself.ui.MainActivity
+import app.freeyourself.ui.PrivateTabOverlay
 import app.freeyourself.ui.WarningOverlay
 import java.util.concurrent.Executors
 
@@ -43,6 +45,9 @@ class GuardService : AccessibilityService() {
     private var passthrough = emptySet<String>()
     /** Apps que nunca analisamos (nem bloqueamos): o próprio, launcher, telefone. */
     private var skipped = emptySet<String>()
+    /** Apps que abrem links: só neles uma captura preta significa aba anônima / modo privado. */
+    private var browsers = emptySet<String>()
+    private var blankStreak = 0
     private var foreground: String? = null
     private var shownBlock: String? = null
     private var lastShot = 0L
@@ -71,6 +76,8 @@ class GuardService : AccessibilityService() {
         val phone = listOfNotNull(getSystemService(TelecomManager::class.java).defaultDialerPackage) +
             listOf("com.android.incallui", "com.samsung.android.incallui", "com.android.server.telecom")
         skipped = passthrough + packageName + homes + phone
+        browsers = packageManager.queryIntentActivities(Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com")), PackageManager.MATCH_ALL)
+            .map { it.activityInfo.packageName }.toSet()
         imageStatus.value = ImageStatus.LOADING
         worker.execute {
             val loaded = runCatching { ImageDetector(this) { FreeYourself.store.sensitivity } }.getOrNull()
@@ -139,18 +146,42 @@ class GuardService : AccessibilityService() {
         takeScreenshot(Display.DEFAULT_DISPLAY, worker, object : TakeScreenshotCallback {
             override fun onSuccess(result: ScreenshotResult) {
                 val buffer = result.hardwareBuffer
-                val adult = runCatching {
+                val inspection = runCatching {
                     Bitmap.wrapHardwareBuffer(buffer, result.colorSpace)?.let { bitmap ->
-                        try { detector.isAdult(ScreenFrame(pkg, bitmap = bitmap)) } finally { bitmap.recycle() }
-                    } ?: false
-                }.getOrDefault(false)
+                        try { detector.inspect(bitmap) } finally { bitmap.recycle() }
+                    }
+                }.getOrNull()
                 buffer.close()
-                if (adult) main.post { onDetected(pkg) }
+                if (inspection != null) main.post { onInspected(pkg, inspection) }
             }
 
-            /** Janela segura (FLAG_SECURE), intervalo curto etc.: o detector de texto continua valendo. */
+            /** Intervalo curto, tela em transição etc.: a próxima captura tenta de novo. */
             override fun onFailure(errorCode: Int) {}
         })
+    }
+
+    /**
+     * Captura preta em navegador = aba anônima / modo privado (o Android protege essas janelas).
+     * Duas seguidas para não confundir com um quadro escuro de vídeo. Não conta como tentativa.
+     */
+    private fun onInspected(pkg: String, inspection: ImageDetector.Inspection) {
+        when {
+            inspection.adult -> { blankStreak = 0; onDetected(pkg) }
+            pkg in browsers && inspection.blank -> if (++blankStreak >= 2) { blankStreak = 0; showPrivateBlocked(pkg) }
+            else -> blankStreak = 0
+        }
+    }
+
+    private fun showPrivateBlocked(pkg: String) {
+        if (pkg != foreground || overlay.visible) return
+        shownBlock = null
+        overlay.show {
+            PrivateTabOverlay(onHome = {
+                FreeYourself.guard.onLeave()
+                hideOverlay()
+                performGlobalAction(GLOBAL_ACTION_HOME)
+            })
+        }
     }
 
     private fun onDetected(pkg: String) {

@@ -27,8 +27,16 @@ class ImageDetector(context: Context, private val sensitivity: () -> Sensitivity
     private val pixels = IntArray(SIZE * SIZE)
     private val output = Array(1) { FloatArray(5) }
 
-    override fun isAdult(frame: ScreenFrame): Boolean =
-        frame.bitmap?.let { isAdultImage(classify(it), sensitivity()) } ?: false
+    /** Resultado de uma captura: conteúdo adulto? captura preta (janela protegida)? */
+    class Inspection(val adult: Boolean, val blank: Boolean)
+
+    override fun isAdult(frame: ScreenFrame): Boolean = frame.bitmap?.let { inspect(it).adult } ?: false
+
+    @Synchronized
+    fun inspect(bitmap: Bitmap): Inspection {
+        val probs = classify(bitmap)
+        return Inspection(adult = isAdultImage(probs, sensitivity()), blank = isBlankFrame(pixels))
+    }
 
     /** Probabilidades na ordem drawings, hentai, neutral, porn, sexy. Não retém o bitmap. */
     @Synchronized

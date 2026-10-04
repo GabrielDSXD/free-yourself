@@ -73,6 +73,7 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 | `PolicyTest` | Avisos sem bloqueio; 4ª → 30 s, 5ª → 1 min, 6ª → 2 min; crescimento; teto nunca ultrapassado; limiares de sensibilidade |
 | `GuardTest` | Contador 1→2→3; progressão; bloqueio ativo não conta de novo; carência e retorno; **reset `2026-10-04 23:59` (tentativa 8) → `2026-10-05 00:01` (contador 0)**; bloqueio que atravessa a meia-noite; **recuperação após matar o processo e após reboot**; **relógio adiantado/atrasado** sem reset nem bloqueio encurtado; fuso para oeste; teto; ajuste mudado no meio do dia; estado corrompido; histórico com lacunas |
 | `DeviceGuideTest` | Detecção da marca (Samsung, Motorola, Xiaomi/Redmi/POCO, outros); inicialização automática só na Xiaomi; caminhos de menu de cada marca |
+| `BlankFrameTest` | Captura preta (aba anônima) reconhecida mesmo com a barra de status; tema escuro e metade preta não contam |
 | `DnsFilterTest` | Status do filtro de DNS: sem rede, desligado, CleanBrowsing/Cloudflare reconhecidos (sem diferenciar maiúsculas), outro DNS privado |
 | `FormatTest` | Durações, contador regressivo, textos do painel, dias da semana em pt-BR |
 | `ImageDetectorTest` (aparelho) | Modelo carrega, saída tem 5 probabilidades, tela neutra não é adulta (com bitmap `HARDWARE`, como no screenshot real) |
@@ -140,7 +141,7 @@ O que fica salvo em SharedPreferences privadas, sem backup na nuvem (`allowBacku
 - **Só Android 11+.** `takeScreenshot` para serviços de acessibilidade existe a partir da API 30.
 - **Sem iOS.** O iOS não oferece API pública para ler ou capturar a tela de outros apps. O Screen Time bloqueia categorias e domínios, mas não analisa conteúdo.
 - **O usuário pode desativar o serviço** nos ajustes do Android a qualquer momento. Não há "modo estrito": seria uma barreira contra a própria pessoa e é a parte mais sensível das políticas da Play Store.
-- **Janelas FLAG_SECURE** (apps de banco, por exemplo) não são capturadas.
+- **Janelas FLAG_SECURE** (apps de banco, por exemplo) não são capturadas: o Android entrega a captura preta. Em **navegadores**, isso significa aba anônima / modo privado, e o app mostra "Aba anônima bloqueada" após duas capturas pretas seguidas (sem contar como tentativa). Fora de navegadores nada acontece, para não afetar apps de banco.
 - **A imagem é avaliada como tela inteira.** Miniaturas pequenas num feed se diluem e podem passar. Evolução: recortar pelos limites das imagens que a árvore de acessibilidade já informa.
 - **DNS privado**: o usuário pode desligá-lo nos ajustes do Android, e navegadores com "DNS seguro" próprio configurado manualmente (ex.: Chrome com um provedor escolhido) o ignoram. Ele só enxerga domínios.
 - **Picture-in-picture**: ao tocar "Ir para o início" durante um bloqueio, players com PiP automático podem continuar o vídeo numa janela flutuante. O bloqueio pede o foco de áudio, e a maioria dos players pausa, mas o PiP em si não é coberto.

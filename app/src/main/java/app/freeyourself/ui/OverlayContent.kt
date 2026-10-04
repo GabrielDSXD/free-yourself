@@ -135,6 +135,29 @@ fun BlockOverlay(attempts: Int, remaining: () -> Long, onHome: () -> Unit, onClo
     }
 }
 
+/** Aba anônima / modo privado: o Android não deixa analisar, então fica fechada. Opaca de propósito. */
+@Composable
+fun PrivateTabOverlay(onHome: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Surface(color = colors.background, modifier = Modifier.fillMaxSize()) {
+        Column(
+            Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text("Aba anônima bloqueada", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Com a proteção ativa, abas anônimas e modos privados ficam fechados: o Android não deixa o " +
+                    "Free Yourself analisar o que aparece neles. Use uma aba normal.",
+                style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant, textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(32.dp))
+            Button(onClick = onHome, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Ir para o início") }
+        }
+    }
+}
+
 /** Expande em 4 s e contrai em 6 s. Estático se o usuário removeu animações do sistema. */
 @Composable
 private fun BreathingCircle(label: String, spoken: String) {
