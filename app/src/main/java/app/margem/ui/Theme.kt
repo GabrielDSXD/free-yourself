@@ -16,11 +16,11 @@ import app.margem.Margem
 import app.margem.R
 import app.margem.data.ThemeMode
 
+// Arquivos estáticos: a fonte variável abria sempre no peso padrão dela (200) e ignorava o FontWeight.
 private val Manrope = FontFamily(
-    Font(R.font.manrope, FontWeight.Normal),
-    Font(R.font.manrope, FontWeight.Medium),
-    Font(R.font.manrope, FontWeight.SemiBold),
-    Font(R.font.manrope, FontWeight.Bold),
+    Font(R.font.manrope_regular, FontWeight.Normal),
+    Font(R.font.manrope_medium, FontWeight.Medium),
+    Font(R.font.manrope_semibold, FontWeight.SemiBold),
 )
 
 private fun style(size: Int, line: Int, weight: FontWeight) =

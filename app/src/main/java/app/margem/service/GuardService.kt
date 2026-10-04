@@ -78,20 +78,27 @@ class GuardService : AccessibilityService() {
         seedForeground()
     }
 
-    /** Após (re)conexão nenhum evento de troca de janela chega: descobre o app atual pela janela ativa. */
+    /**
+     * Confere o app da janela ativa. Necessário porque nem toda volta de app gera STATE_CHANGED
+     * (o Chrome retomado não gera) e porque após (re)conexão nenhum evento de troca chega.
+     * Com overlay visível a janela ativa pode ser o próprio overlay, então não confere.
+     */
     private fun seedForeground() {
+        if (overlay.visible) return
         val pkg = rootInActiveWindow?.packageName?.toString() ?: return
-        foregroundAfter(pkg, null, packageName, MainActivity::class.java.name, passthrough)?.let(::onForeground)
+        // Sem overlay visível, uma janela ativa do próprio pacote só pode ser a Activity.
+        foregroundAfter(pkg, MainActivity::class.java.name, packageName, MainActivity::class.java.name, passthrough)
+            ?.let(::onForeground)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val pkg = event.packageName?.toString() ?: return
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+        val stateChanged = event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        if (stateChanged) {
             foregroundAfter(pkg, event.className?.toString(), packageName, MainActivity::class.java.name, passthrough)
                 ?.let(::onForeground)
-        } else if (foreground == null) {
-            seedForeground()
         }
+        if (pkg != foreground && (stateChanged || pkg !in passthrough)) seedForeground()
         if (pkg == foreground && canScan(pkg)) scanText(pkg)
     }
 
