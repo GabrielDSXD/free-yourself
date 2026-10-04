@@ -24,10 +24,16 @@ import app.freeyourself.dns.dnsStatus
 import app.freeyourself.dns.label
 
 /** O que o sistema está usando como DNS privado na rede ativa. */
-private fun readDnsStatus(context: Context): DnsStatus {
+fun readDnsStatus(context: Context): DnsStatus {
     val cm = context.getSystemService(ConnectivityManager::class.java)
     val link = cm.activeNetwork?.let(cm::getLinkProperties)
     return dnsStatus(online = link != null, serverName = link?.privateDnsServerName)
+}
+
+/** Copia o hostname do provedor e abre os ajustes de rede, onde fica o DNS privado. */
+fun openPrivateDnsSettings(context: Context, host: String) {
+    context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("DNS privado", host))
+    context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
 }
 
 /** Filtro de sites pelo DNS privado do Android: o app guia a ativação e mostra o status. */
@@ -49,18 +55,13 @@ fun DnsSection(resumes: Int) {
 
     val host = store.dnsProvider.host
     val action = if (status is DnsStatus.Filtering) "Trocar no Android" else "Ativar no Android"
-    val open = {
-        context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("DNS privado", host))
-        context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
-    }
+    val open = { openPrivateDnsSettings(context, host) }
     if (status is DnsStatus.Filtering) OutlinedButton(onClick = open) { Text(action) } else Button(onClick = open) { Text(action) }
 
     if (status !is DnsStatus.Filtering) {
         Spacer(Modifier.height(8.dp))
         Text(
-            "O endereço $host vai para a área de transferência. Na tela que abrir, toque em DNS privado " +
-                "(na Samsung: Mais configurações de conexão → DNS privado; em outros aparelhos pode estar em Avançado), " +
-                "escolha Nome do host do provedor, cole e toque em Salvar.",
+            "O endereço $host vai para a área de transferência. $dnsSteps",
             style = MaterialTheme.typography.bodyMedium, color = muted,
         )
     }

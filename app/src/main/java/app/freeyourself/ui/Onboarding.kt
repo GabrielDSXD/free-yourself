@@ -1,11 +1,5 @@
 package app.freeyourself.ui
 
-import android.Manifest
-import android.content.Intent
-import android.os.Build
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,21 +21,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import app.freeyourself.isServiceEnabled
 
 private val intro = listOf(
     "Retome o controle" to "Este aplicativo ajuda você a evitar conteúdo adulto enquanto usa o celular.",
@@ -49,7 +38,7 @@ private val intro = listOf(
     "Bloqueios inteligentes" to "Quanto mais você insistir no mesmo dia, maior será o intervalo de bloqueio.",
     "Um novo começo todos os dias" to "Os bloqueios e contadores são reiniciados diariamente.",
 )
-private const val STEPS = 7   // 4 de introdução + privacidade + acessibilidade + notificações
+private const val STEPS = 6   // 4 de introdução + privacidade + configuração
 
 @Composable
 fun Onboarding(resumes: Int, onDone: () -> Unit) {
@@ -69,8 +58,7 @@ fun Onboarding(resumes: Int, onDone: () -> Unit) {
                 when (s) {
                     in 0..3 -> Page(intro[s].first, intro[s].second)
                     4 -> Page("Sua tela não sai do aparelho", PRIVACY_TEXT)
-                    5 -> AccessibilityStep(resumes)
-                    else -> NotificationStep()
+                    else -> SetupStep(resumes)
                 }
             }
         }
@@ -89,51 +77,12 @@ private fun Page(title: String, body: String) {
 }
 
 @Composable
-private fun AccessibilityStep(resumes: Int) {
-    val context = LocalContext.current
-    val enabled = remember(resumes) { isServiceEnabled(context) }
+private fun SetupStep(resumes: Int) {
     Page(
-        "Ative a proteção",
-        "Para detectar conteúdo, o Free Yourself usa o serviço de acessibilidade do Android. Com ele, o app " +
-            "analisa as imagens da tela no próprio aparelho. Mensagens e textos não são lidos. " +
-            "Nada é gravado e nada é enviado.",
+        "Configure a proteção",
+        "O Free Yourself usa o serviço de acessibilidade do Android para analisar as imagens da tela no próprio " +
+            "aparelho. Mensagens e textos não são lidos. Nada é gravado e nada é enviado.",
     )
-    Spacer(Modifier.height(24.dp))
-    if (enabled) {
-        ProtectionStatus(enabled = true)
-    } else {
-        OutlinedButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) {
-            Text("Abrir ajustes de acessibilidade")
-        }
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "Em Apps instalados, escolha Free Yourself e ative. Se o Android disser que a configuração é restrita: " +
-                "Informações do app → menu ⋮ → Permitir configurações restritas.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun NotificationStep() {
-    var granted by remember { mutableStateOf(false) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
-    Page(
-        "Saiba quando o bloqueio acabar",
-        "Uma notificação discreta avisa que o bloqueio terminou. Ela nunca diz o motivo.",
-    )
-    Spacer(Modifier.height(24.dp))
-    if (granted) {
-        Text("Notificações permitidas.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
-    } else {
-        OutlinedButton(onClick = {
-            if (Build.VERSION.SDK_INT >= 33) launcher.launch(Manifest.permission.POST_NOTIFICATIONS) else granted = true
-        }) { Text("Permitir notificações") }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Opcional. Dá para mudar depois em Ajustes.", style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    Spacer(Modifier.height(8.dp))
+    SetupChecklist(resumes)
 }

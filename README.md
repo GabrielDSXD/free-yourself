@@ -48,6 +48,8 @@ Abra o Free Yourself e siga o onboarding. Para ativar a proteção, vá em **Aju
 
 Se o Android disser que a configuração é **restrita** (acontece com apps instalados fora da loja), vá em Informações do app → menu ⋮ → Permitir configurações restritas, e tente de novo.
 
+O próprio app guia essa configuração: a tela **Configurar proteção** (no onboarding, no Hoje quando falta algo e nos Ajustes) detecta a marca do celular (`Build.MANUFACTURER`) e mostra os toques exatos para **Samsung**, **Motorola** e **Xiaomi/Redmi/POCO**, com um guia genérico para as demais. Itens: ativar a acessibilidade, liberar configurações restritas, bateria sem restrições, inicialização automática (só Xiaomi), filtro de DNS e notificações. Cada um mostra se está pronto e abre a tela certa do sistema.
+
 ## Build de release
 
 ```bash
@@ -70,6 +72,7 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 |---|---|
 | `PolicyTest` | Avisos sem bloqueio; 4ª → 30 s, 5ª → 1 min, 6ª → 2 min; crescimento; teto nunca ultrapassado; limiares de sensibilidade |
 | `GuardTest` | Contador 1→2→3; progressão; bloqueio ativo não conta de novo; carência e retorno; **reset `2026-10-04 23:59` (tentativa 8) → `2026-10-05 00:01` (contador 0)**; bloqueio que atravessa a meia-noite; **recuperação após matar o processo e após reboot**; **relógio adiantado/atrasado** sem reset nem bloqueio encurtado; fuso para oeste; teto; ajuste mudado no meio do dia; estado corrompido; histórico com lacunas |
+| `DeviceGuideTest` | Detecção da marca (Samsung, Motorola, Xiaomi/Redmi/POCO, outros); inicialização automática só na Xiaomi; caminhos de menu de cada marca |
 | `DnsFilterTest` | Status do filtro de DNS: sem rede, desligado, CleanBrowsing/Cloudflare reconhecidos (sem diferenciar maiúsculas), outro DNS privado |
 | `FormatTest` | Durações, contador regressivo, textos do painel, dias da semana em pt-BR |
 | `ImageDetectorTest` (aparelho) | Modelo carrega, saída tem 5 probabilidades, tela neutra não é adulta (com bitmap `HARDWARE`, como no screenshot real) |

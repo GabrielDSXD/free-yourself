@@ -1,7 +1,5 @@
 package app.freeyourself.ui
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -27,12 +25,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.freeyourself.core.DayStats
+import app.freeyourself.isServiceEnabled
 
 @Composable
 fun SectionTitle(text: String) {
@@ -81,8 +81,10 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
 }
 
 @Composable
-fun ProtectionStatus(enabled: Boolean) {
+fun ProtectionStatus(resumes: Int, onOpenSetup: () -> Unit) {
     val context = LocalContext.current
+    val enabled = remember(resumes) { isServiceEnabled(context) }
+    val complete = remember(resumes) { setupComplete(context) }
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val dot = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -90,17 +92,16 @@ fun ProtectionStatus(enabled: Boolean) {
             Spacer(Modifier.width(8.dp))
             Text(if (enabled) "Proteção ativa" else "Proteção desligada", style = MaterialTheme.typography.bodyLarge)
         }
-        if (!enabled) {
+        if (!complete) {
             Spacer(Modifier.height(8.dp))
             Text(
-                "O Free Yourself precisa do serviço de acessibilidade para enxergar a tela.",
+                if (enabled) "Faltam ajustes para o celular não desligar a proteção em segundo plano."
+                else "O Free Yourself precisa de algumas permissões para enxergar a tela.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
-            Button(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) {
-                Text("Ativar proteção")
-            }
+            Button(onClick = onOpenSetup) { Text("Concluir configuração") }
         }
     }
 }

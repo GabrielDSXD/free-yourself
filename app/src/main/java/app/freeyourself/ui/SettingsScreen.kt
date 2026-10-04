@@ -24,7 +24,7 @@ import app.freeyourself.service.GuardService
 import app.freeyourself.service.ImageStatus
 
 @Composable
-fun SettingsScreen(resumes: Int) {
+fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit) {
     val store = FreeYourself.store
     val context = LocalContext.current
     val enabled = remember(resumes) { isServiceEnabled(context) }
@@ -35,12 +35,8 @@ fun SettingsScreen(resumes: Int) {
         Text("Ajustes", style = MaterialTheme.typography.headlineMedium)
 
         SectionTitle("Proteção")
-        ProtectionStatus(enabled)
-        if (enabled) {
-            TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) {
-                Text("Abrir ajustes de acessibilidade")
-            }
-        }
+        ProtectionStatus(resumes, onOpenSetup)
+        TextButton(onClick = onOpenSetup) { Text("Ver passo a passo das permissões") }
 
         SectionTitle("Bloqueio")
         Options("Primeiro bloqueio", listOf(15 to "15 s", 30 to "30 s", 60 to "1 min"), store.initialBlockSec) { store.initialBlockSec = it }

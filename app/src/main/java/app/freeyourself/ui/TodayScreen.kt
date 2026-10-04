@@ -16,18 +16,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.freeyourself.FreeYourself
-import app.freeyourself.isServiceEnabled
 import kotlinx.coroutines.delay
 
 @Composable
-fun TodayScreen(resumes: Int) {
+fun TodayScreen(resumes: Int, onOpenSetup: () -> Unit) {
     FreeYourself.version.intValue                     // recompõe quando o Guard muda
     val guard = FreeYourself.guard
-    val context = LocalContext.current
-    val enabled = remember(resumes) { isServiceEnabled(context) }
     var now by remember { mutableStateOf(guard.now()) }
     LaunchedEffect(Unit) {
         while (true) { guard.tick(); now = guard.now(); delay(30_000) }
@@ -39,7 +35,7 @@ fun TodayScreen(resumes: Int) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 32.dp)) {
         Text(greeting(now.hour), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(12.dp))
-        ProtectionStatus(enabled)
+        ProtectionStatus(resumes, onOpenSetup)
         SectionTitle("Hoje")
         DayLine(day, policy.warnings)
         Spacer(Modifier.height(8.dp))

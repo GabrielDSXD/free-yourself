@@ -23,6 +23,8 @@ class Store(context: Context) {
     var maxBlockMin by pref("maxBlockMin", 120, String::toInt)
     var sensitivity by pref("sensitivity", Sensitivity.MEDIUM, Sensitivity::valueOf)
     var theme by pref("theme", ThemeMode.SYSTEM, ThemeMode::valueOf)
+    /** Xiaomi: não há API para ler a inicialização automática; o usuário confirma. */
+    var autostartDone by pref("autostartDone", false, String::toBoolean)
     var dnsProvider by pref("dnsProvider", DnsProvider.CLEANBROWSING, DnsProvider::valueOf)
 
     fun policy() = Policy(initialBlock = initialBlockSec.seconds, maxBlock = maxBlockMin.minutes)

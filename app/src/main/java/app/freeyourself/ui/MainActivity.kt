@@ -72,6 +72,12 @@ private fun App(resumes: Int) {
         return
     }
     var tab by rememberSaveable { mutableStateOf(Tab.Today) }
+    var setupOpen by rememberSaveable { mutableStateOf(false) }
+    if (setupOpen) {
+        SetupScreen(resumes) { setupOpen = false }
+        return
+    }
+    val openSetup = { setupOpen = true }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
@@ -91,9 +97,9 @@ private fun App(resumes: Int) {
     ) { padding ->
         Box(Modifier.padding(padding).consumeWindowInsets(padding)) {
             when (tab) {
-                Tab.Today -> TodayScreen(resumes)
+                Tab.Today -> TodayScreen(resumes, openSetup)
                 Tab.Week -> WeekScreen()
-                Tab.Settings -> SettingsScreen(resumes)
+                Tab.Settings -> SettingsScreen(resumes, openSetup)
             }
         }
     }
