@@ -27,7 +27,10 @@ class DeviceGuideTest {
         assertTrue(guideFor(Brand.SAMSUNG).accessibility.contains("Aplicativos instalados"))
         assertTrue(guideFor(Brand.XIAOMI).dns.contains("Conexão e compartilhamento"))
         assertTrue(guideFor(Brand.XIAOMI).battery.contains("Economia de bateria"))
-        assertTrue(guideFor(Brand.MOTOROLA).accessibility.contains("Apps baixados"))
+        // Conferidos num moto g32 (Android 13).
+        assertTrue(guideFor(Brand.MOTOROLA).accessibility.contains("Apps transferidos por download"))
+        assertTrue(guideFor(Brand.MOTOROLA).battery.contains("Uso da bateria pelo app"))
+        assertTrue(guideFor(Brand.MOTOROLA).dns.contains("DNS particular"))
     }
 
     @Test fun everyBrandHasEveryStep() {

@@ -35,11 +35,11 @@ fun guideFor(brand: Brand): DeviceGuide = when (brand) {
     )
     Brand.MOTOROLA -> DeviceGuide(
         name = "Motorola",
-        accessibility = "Em Acessibilidade, toque em Apps baixados → Free Yourself e ative.",
+        accessibility = "Em Acessibilidade, toque em Apps transferidos por download → Free Yourself e ative.",
         restricted = "Na tela do app, toque em ⋮ (canto superior direito) → Permitir configurações restritas e confirme com o PIN.",
-        battery = "Na tela do app, toque em Bateria (ou Uso da bateria do app) → Sem restrições.",
+        battery = "Na tela do app, toque em Uso da bateria pelo app → Sem restrições.",
         autostart = null,
-        dns = "Toque em DNS particular (ou DNS privado) → Nome do host do provedor, cole e toque em Salvar.",
+        dns = "Toque em DNS particular → Nome do host do provedor de DNS particular, cole e toque em Salvar.",
     )
     Brand.XIAOMI -> DeviceGuide(
         name = "Xiaomi",
