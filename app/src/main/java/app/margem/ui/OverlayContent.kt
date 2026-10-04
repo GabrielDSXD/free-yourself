@@ -21,8 +21,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -64,7 +66,7 @@ fun WarningOverlay(level: Int, onBack: () -> Unit, onContinue: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.9f)).safeDrawingPadding().padding(24.dp), Alignment.Center) {
         Surface(color = colors.surfaceContainer, shape = RoundedCornerShape(28.dp), modifier = Modifier.widthIn(max = 420.dp)) {
-            Column(Modifier.padding(24.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     repeat(3) { i ->
                         val dot = if (i < level) colors.tertiary else colors.outline
@@ -94,13 +96,14 @@ fun BlockOverlay(attempts: Int, remaining: () -> Long, onHome: () -> Unit, onClo
     }
     val colors = MaterialTheme.colorScheme
     Surface(color = colors.background, modifier = Modifier.fillMaxSize()) {
+        // Rolável: com fonte grande o botão de saída não pode ficar fora da tela.
         Column(
-            Modifier.safeDrawingPadding().padding(24.dp),
+            Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             if (left > 0) {
-                Text("Conteúdo bloqueado", style = MaterialTheme.typography.headlineMedium)
+                Text("Conteúdo bloqueado", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(32.dp))
                 BreathingCircle(formatClock(left), remainingLabel(left))
                 Spacer(Modifier.height(12.dp))
@@ -119,7 +122,7 @@ fun BlockOverlay(attempts: Int, remaining: () -> Long, onHome: () -> Unit, onClo
                 Spacer(Modifier.height(32.dp))
                 Button(onClick = onHome, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Ir para o início") }
             } else {
-                Text("Bloqueio encerrado", style = MaterialTheme.typography.headlineMedium)
+                Text("Bloqueio encerrado", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(12.dp))
                 Text(
                     "Você pode continuar usando o dispositivo.",
