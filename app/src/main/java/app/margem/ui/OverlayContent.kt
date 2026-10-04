@@ -41,9 +41,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.margem.Margem
@@ -162,7 +162,8 @@ private fun BreathingCircle(label: String, spoken: String) {
         Text(
             label,
             style = MaterialTheme.typography.displayLarge,
-            modifier = Modifier.semantics {
+            // clearAndSet: o texto muda a cada segundo, mas o leitor de tela só ouve a frase por minuto.
+            modifier = Modifier.clearAndSetSemantics {
                 contentDescription = spoken
                 liveRegion = LiveRegionMode.Polite
             },

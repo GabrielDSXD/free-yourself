@@ -135,6 +135,7 @@ O que fica salvo em SharedPreferences privadas, sem backup na nuvem (`allowBacku
 - **O usuário pode desativar o serviço** nos ajustes do Android a qualquer momento. Não há "modo estrito": seria uma barreira contra a própria pessoa e é a parte mais sensível das políticas da Play Store.
 - **Janelas FLAG_SECURE** não são capturadas. Nelas só o texto é analisado.
 - **A imagem é avaliada como tela inteira.** Miniaturas pequenas num feed se diluem e podem passar. Evolução: recortar pelos limites das imagens que a árvore de acessibilidade já informa.
+- **Picture-in-picture**: ao tocar "Ir para o início" durante um bloqueio, players com PiP automático podem continuar o vídeo numa janela flutuante. O bloqueio pede o foco de áudio, e a maioria dos players pausa, mas o PiP em si não é coberto.
 - **Mudar o relógio e reiniciar o aparelho** burla o reset diário. Fechar essa brecha exigiria hora de rede, o que conflita com "sem internet".
 - **Play Store**: o uso de AccessibilityService para fins que não são de acessibilidade exige declaração e revisão do Google.
 - **Gerenciadores de bateria agressivos** de alguns fabricantes podem desligar o serviço. O app mostra o status e orienta a reativar.

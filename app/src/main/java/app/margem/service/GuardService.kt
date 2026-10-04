@@ -8,10 +8,13 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.Bitmap
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
+import android.telecom.TelecomManager
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -38,13 +41,15 @@ class GuardService : AccessibilityService() {
     private lateinit var text: TextDetector
     @Volatile private var image: ImageDetector? = null
 
-    /** Janelas que aparecem por cima sem trocar o app em primeiro plano. */
+    /** Janelas de outros pacotes que aparecem por cima sem trocar o app em primeiro plano. */
     private var passthrough = emptySet<String>()
-    /** Apps que nunca analisamos. */
+    /** Apps que nunca analisamos (nem bloqueamos): o próprio, launcher, telefone. */
     private var skipped = emptySet<String>()
     private var foreground: String? = null
     private var shownBlock: String? = null
     private var lastShot = 0L
+    /** Foco de áudio permanente durante o bloqueio: a maioria dos players pausa e não retoma sozinha. */
+    private val silence by lazy { AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).setOnAudioFocusChangeListener {}.build() }
 
     private val heartbeat = object : Runnable {
         override fun run() {
@@ -59,20 +64,34 @@ class GuardService : AccessibilityService() {
         overlay = Overlay(this)
         text = TextDetector(assets.open("blocklist.txt").bufferedReader().use { it.readText() })
         val imes = getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.packageName }
-        passthrough = setOf(packageName, "com.android.systemui") + imes
+        passthrough = setOf("com.android.systemui") + imes
         val homes = packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
             .map { it.activityInfo.packageName }
-        skipped = passthrough + "android" + homes
+        val phone = listOfNotNull(getSystemService(TelecomManager::class.java).defaultDialerPackage) +
+            listOf("com.android.incallui", "com.samsung.android.incallui", "com.android.server.telecom")
+        skipped = passthrough + packageName + "android" + homes + phone
         worker.execute {
             runCatching { ImageDetector(this) { Margem.store.sensitivity } }
                 .onSuccess { image = it; imageReady = true }      // se falhar, segue só com texto
         }
         main.post(heartbeat)
+        seedForeground()
+    }
+
+    /** Após (re)conexão nenhum evento de troca de janela chega: descobre o app atual pela janela ativa. */
+    private fun seedForeground() {
+        val pkg = rootInActiveWindow?.packageName?.toString() ?: return
+        foregroundAfter(pkg, null, packageName, MainActivity::class.java.name, passthrough)?.let(::onForeground)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val pkg = event.packageName?.toString() ?: return
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && pkg !in passthrough) onForeground(pkg)
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            foregroundAfter(pkg, event.className?.toString(), packageName, MainActivity::class.java.name, passthrough)
+                ?.let(::onForeground)
+        } else if (foreground == null) {
+            seedForeground()
+        }
         if (pkg == foreground && canScan(pkg)) scanText(pkg)
     }
 
@@ -173,6 +192,7 @@ class GuardService : AccessibilityService() {
     private fun showBlock(pkg: String) {
         if (shownBlock == pkg && overlay.visible) return
         shownBlock = pkg
+        getSystemService(AudioManager::class.java).requestAudioFocus(silence)
         val attempts = Margem.guard.today.attempts
         overlay.show {
             BlockOverlay(
@@ -189,6 +209,7 @@ class GuardService : AccessibilityService() {
     }
 
     private fun hideOverlay() {
+        if (shownBlock != null) getSystemService(AudioManager::class.java).abandonAudioFocusRequest(silence)
         overlay.hide()
         shownBlock = null
     }
