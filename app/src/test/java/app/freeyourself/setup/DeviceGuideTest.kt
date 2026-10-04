@@ -24,7 +24,10 @@ class DeviceGuideTest {
 
     @Test fun stepsFollowEachBrandsMenus() {
         assertTrue(guideFor(Brand.SAMSUNG).dns.contains("Mais configurações de conexão"))
+        // Conferidos num Galaxy S22 (One UI 8, Android 16).
         assertTrue(guideFor(Brand.SAMSUNG).accessibility.contains("Aplicativos instalados"))
+        assertTrue(guideFor(Brand.SAMSUNG).battery.contains("Não restrito"))
+        assertTrue(guideFor(Brand.SAMSUNG).dns.contains("Nome do host do provedor de DNS privado"))
         assertTrue(guideFor(Brand.XIAOMI).dns.contains("Conexão e compartilhamento"))
         assertTrue(guideFor(Brand.XIAOMI).battery.contains("Economia de bateria"))
         // Conferidos num moto g32 (Android 13).

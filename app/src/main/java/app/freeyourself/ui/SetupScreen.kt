@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
@@ -100,7 +101,12 @@ fun SetupChecklist(resumes: Int) {
     val context = LocalContext.current
     val store = FreeYourself.store
     var notificationAnswer by remember { mutableIntStateOf(0) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { notificationAnswer++ }
+    val notificationSettings = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+    // Recusado de vez, o pedido nem aparece: nesse caso só a tela de notificações do app resolve.
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        notificationAnswer++
+        if (!granted) context.openFirst(notificationSettings)
+    }
 
     val accessibility = remember(resumes) { isServiceEnabled(context) }
     val battery = remember(resumes) { batteryUnrestricted(context) }
@@ -146,8 +152,10 @@ fun SetupChecklist(resumes: Int) {
         steps = "Avisa quando um bloqueio termina, sem dizer o motivo.",
         action = "Permitir notificações",
     ) {
-        if (Build.VERSION.SDK_INT >= 33) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        else context.openFirst(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+        // Com a permissão já dada, as notificações podem estar desligadas na tela do app (caso visto no S22).
+        val canAsk = Build.VERSION.SDK_INT >= 33 &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        if (canAsk) launcher.launch(Manifest.permission.POST_NOTIFICATIONS) else context.openFirst(notificationSettings)
     }
 }
 

@@ -29,7 +29,7 @@ fun guideFor(brand: Brand): DeviceGuide = when (brand) {
         name = "Samsung",
         accessibility = "Em Acessibilidade, toque em Aplicativos instalados → Free Yourself e ative.",
         restricted = "Na tela do app, toque em ⋮ (canto superior direito) → Permitir configurações restritas e confirme com a digital ou o PIN.",
-        battery = "Na tela do app, toque em Bateria → Sem restrições.",
+        battery = "Na tela do app, desça até Bateria e escolha Não restrito.",
         autostart = null,
         dns = "Toque em Mais configurações de conexão → DNS privado → Nome do host do provedor de DNS privado, cole e toque em Salvar.",
     )
