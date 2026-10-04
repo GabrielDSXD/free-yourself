@@ -14,6 +14,12 @@ class TextDetectorTest {
         assertTrue(detector.matches("m.xvideos.com"))
         assertTrue(detector.matches("pt.xhamster.desi/videos"))
         assertTrue(detector.matches("beeg.com"))
+        assertTrue(detector.matches("www.xvideos.red"))
+        assertTrue(detector.matches("pt.cam4.com.br"))
+        assertTrue(detector.matches("www.porntube.com"))
+        assertTrue(detector.matches("motherless.com/term/videos"))
+        assertTrue(detector.matches("www.xozilla.com"))
+        assertTrue(detector.matches("redgifs.com/watch/x"))
     }
 
     @Test fun detectsSearchesAndExplicitTerms() {

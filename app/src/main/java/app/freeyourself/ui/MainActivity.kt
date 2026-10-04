@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -81,6 +82,8 @@ private fun App(resumes: Int) {
                         onClick = { tab = t },
                         icon = { Icon(painterResource(t.icon), contentDescription = null) },
                         label = { Text(t.label) },
+                        // Índigo é a cor do bloqueio; a navegação usa a cor primária do app.
+                        colors = NavigationBarItemDefaults.colors(selectedTextColor = MaterialTheme.colorScheme.primary),
                     )
                 }
             }

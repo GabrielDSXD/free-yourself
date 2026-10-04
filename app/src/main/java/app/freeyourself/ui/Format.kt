@@ -3,7 +3,9 @@ package app.freeyourself.ui
 import app.freeyourself.core.DayStats
 import app.freeyourself.core.Policy
 import app.freeyourself.core.getBlockDuration
+import java.time.Duration
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -14,15 +16,15 @@ const val PRIVACY_TEXT =
         "O Free Yourself não grava capturas, imagens, sites ou textos: guarda só os contadores de cada dia. " +
         "O app não tem permissão de acesso à internet, então nada pode ser enviado."
 
-/** "30 s", "8 min", "1 h 4 min". */
+/** "30 s", "8 min", "1 h 4 min", com espaço inseparável entre número e unidade. */
 fun formatDuration(ms: Long): String {
     val s = ms / 1000
     return when {
-        s < 60 -> "$s s"
-        s < 3600 -> "${s / 60} min"
+        s < 60 -> "$s\u00A0s"
+        s < 3600 -> "${s / 60}\u00A0min"
         else -> {
             val m = s % 3600 / 60
-            if (m == 0L) "${s / 3600} h" else "${s / 3600} h $m min"
+            if (m == 0L) "${s / 3600}\u00A0h" else "${s / 3600}\u00A0h $m\u00A0min"
         }
     }
 }
@@ -62,3 +64,11 @@ fun sequenceText(p: Policy): String {
 
 fun weekday(date: LocalDate): String =
     date.dayOfWeek.getDisplayName(TextStyle.SHORT, PT_BR).removeSuffix(".").replaceFirstChar { it.uppercase() }
+
+/** Até o reset dos contadores: a meia-noite que encerra o dia do contador, não o dia do relógio. */
+fun msUntilReset(now: ZonedDateTime, today: LocalDate): Long =
+    Duration.between(now, today.plusDays(1).atStartOfDay(now.zone)).toMillis().coerceAtLeast(0)
+
+fun blockFootnote(attempts: Int): String =
+    if (attempts == 0) "Este bloqueio começou ontem. Os contadores de hoje já recomeçaram."
+    else "Hoje: ${attempts}ª detecção. À meia-noite tudo recomeça."

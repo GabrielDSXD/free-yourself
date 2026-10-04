@@ -21,6 +21,7 @@ import app.freeyourself.core.Sensitivity
 import app.freeyourself.data.ThemeMode
 import app.freeyourself.isServiceEnabled
 import app.freeyourself.service.GuardService
+import app.freeyourself.service.ImageStatus
 
 @Composable
 fun SettingsScreen(resumes: Int) {
@@ -63,7 +64,8 @@ fun SettingsScreen(resumes: Int) {
         StatRow("Texto e endereços", if (enabled) "Ativo" else "Desligado")
         StatRow("Análise de imagens", when {
             !enabled -> "Desligada"
-            GuardService.imageReady -> "Ativa"
+            GuardService.imageStatus.value == ImageStatus.READY -> "Ativa"
+            GuardService.imageStatus.value == ImageStatus.FAILED -> "Indisponível (só texto)"
             else -> "Carregando"
         })
         Text("Tudo é analisado no próprio aparelho.", style = MaterialTheme.typography.bodyMedium, color = muted)

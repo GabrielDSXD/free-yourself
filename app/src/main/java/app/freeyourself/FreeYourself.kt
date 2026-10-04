@@ -1,8 +1,10 @@
 package app.freeyourself
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.os.SystemClock
 import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
 import androidx.compose.runtime.mutableIntStateOf
 import app.freeyourself.core.Clock
 import app.freeyourself.core.Guard
@@ -37,6 +39,8 @@ private class AndroidClock(private val context: Context) : Clock {
     override fun zone(): ZoneId = ZoneId.systemDefault()
 }
 
+/** Serviço ligado E vinculado pelo sistema (não só a chave nos ajustes). */
 fun isServiceEnabled(context: Context): Boolean =
-    Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
-        ?.contains("${context.packageName}/") == true
+    context.getSystemService(AccessibilityManager::class.java)
+        .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        .any { it.resolveInfo.serviceInfo.packageName == context.packageName }

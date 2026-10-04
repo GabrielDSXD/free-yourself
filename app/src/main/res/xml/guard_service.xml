@@ -5,5 +5,5 @@
     android:canRetrieveWindowContent="true"
     android:canTakeScreenshot="true"
     android:description="@string/service_description"
-    android:notificationTimeout="300"
+    android:notificationTimeout="500"
     android:settingsActivity="app.freeyourself.ui.MainActivity" />

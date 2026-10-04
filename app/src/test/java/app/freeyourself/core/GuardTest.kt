@@ -96,6 +96,14 @@ class GuardTest {
         assertEquals(10_000L, guard().remainingMs("x"))
     }
 
+    @Test fun rebootWithoutBootCountUsesWallClock() {
+        clock.boot = 0                                        // aparelho que não expõe BOOT_COUNT
+        guard().reachBlock()                                  // 30 s, termina em elapsed 3 630 000
+        clock.wall += 10_000
+        clock.elapsed = 9_000_000                             // reiniciou e já tem mais uptime que antes
+        assertEquals(20_000L, guard().remainingMs("x"))
+    }
+
     @Test fun rebootNeverExtendsBlock() {
         guard().reachBlock()
         clock.wall -= 3_600_000                               // relógio atrasado 1 h

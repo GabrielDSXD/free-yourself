@@ -19,6 +19,7 @@ import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.runtime.mutableStateOf
 import app.freeyourself.FreeYourself
 import app.freeyourself.R
 import app.freeyourself.core.Decision
@@ -32,7 +33,7 @@ import java.util.concurrent.Executors
 
 /**
  * Único ponto de contato com o sistema: lê a tela, decide com o Guard e mostra os overlays.
- * Toda a lógica de estado roda na main thread; só screenshot + inferência vão para [worker].
+ * Toda a lógica de estado roda na main thread; leitura da árvore, screenshot e inferência vão para [worker].
  */
 class GuardService : AccessibilityService() {
     private val main = Handler(Looper.getMainLooper())
@@ -64,15 +65,21 @@ class GuardService : AccessibilityService() {
         overlay = Overlay(this)
         text = TextDetector(assets.open("blocklist.txt").bufferedReader().use { it.readText() })
         val imes = getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.packageName }
-        passthrough = setOf("com.android.systemui") + imes
+        // Barra de notificações, teclados e diálogos do sistema aparecem por cima sem trocar o app.
+        passthrough = setOf(
+            "com.android.systemui", "android", "com.android.intentresolver",
+            "com.android.permissioncontroller", "com.google.android.permissioncontroller",
+        ) + imes
         val homes = packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
             .map { it.activityInfo.packageName }
         val phone = listOfNotNull(getSystemService(TelecomManager::class.java).defaultDialerPackage) +
             listOf("com.android.incallui", "com.samsung.android.incallui", "com.android.server.telecom")
-        skipped = passthrough + packageName + "android" + homes + phone
+        skipped = passthrough + packageName + homes + phone
+        imageStatus.value = ImageStatus.LOADING
         worker.execute {
-            runCatching { ImageDetector(this) { FreeYourself.store.sensitivity } }
-                .onSuccess { image = it; imageReady = true }      // se falhar, segue só com texto
+            val loaded = runCatching { ImageDetector(this) { FreeYourself.store.sensitivity } }.getOrNull()
+            image = loaded                                     // se falhar, segue só com texto
+            main.post { imageStatus.value = if (loaded != null) ImageStatus.READY else ImageStatus.FAILED }
         }
         main.post(heartbeat)
         seedForeground()
@@ -105,7 +112,6 @@ class GuardService : AccessibilityService() {
     override fun onInterrupt() {}
 
     override fun onDestroy() {
-        imageReady = false
         main.removeCallbacksAndMessages(null)
         if (::overlay.isInitialized) overlay.hide()
         worker.execute { image?.close(); image = null }
@@ -128,10 +134,14 @@ class GuardService : AccessibilityService() {
         }
     }
 
+    /** Percorrer a árvore são várias chamadas IPC: fica fora da main thread; a decisão volta para ela. */
     private fun scanText(pkg: String) {
-        val root = rootInActiveWindow ?: return
-        if (root.packageName?.toString() != pkg) return
-        if (text.isAdult(ScreenFrame(pkg, text = collectText(root)))) onDetected(pkg) else takeShot(pkg)
+        worker.execute {
+            val root = rootInActiveWindow ?: return@execute
+            if (root.packageName?.toString() != pkg) return@execute
+            val adult = text.isAdult(ScreenFrame(pkg, text = collectText(root)))
+            main.post { if (adult) onDetected(pkg) else takeShot(pkg) }
+        }
     }
 
     private fun collectText(root: AccessibilityNodeInfo): String {
@@ -242,7 +252,9 @@ class GuardService : AccessibilityService() {
 
     companion object {
         private const val CHANNEL = "status"
-        @Volatile var imageReady = false
-            private set
+        /** Lido pelos Ajustes; estado do Compose para a tela atualizar sozinha. */
+        val imageStatus = mutableStateOf(ImageStatus.LOADING)
     }
 }
+
+enum class ImageStatus { LOADING, READY, FAILED }

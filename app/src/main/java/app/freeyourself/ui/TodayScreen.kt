@@ -20,7 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.freeyourself.FreeYourself
 import app.freeyourself.isServiceEnabled
-import java.time.Duration
 import kotlinx.coroutines.delay
 
 @Composable
@@ -35,7 +34,7 @@ fun TodayScreen(resumes: Int) {
     }
     val day = guard.today
     val policy = FreeYourself.store.policy()
-    val untilMidnight = Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay(now.zone)).toMillis()
+    val untilMidnight = msUntilReset(now, day.date)
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 32.dp)) {
         Text(greeting(now.hour), style = MaterialTheme.typography.headlineMedium)

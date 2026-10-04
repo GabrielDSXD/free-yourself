@@ -116,7 +116,7 @@ fun BlockOverlay(attempts: Int, remaining: () -> Long, onHome: () -> Unit, onClo
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "Hoje: ${attempts}ª detecção. À meia-noite tudo recomeça.",
+                    blockFootnote(attempts),
                     style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(32.dp))

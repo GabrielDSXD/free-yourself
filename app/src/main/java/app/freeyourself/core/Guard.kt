@@ -50,7 +50,8 @@ class Guard(
         val savedWall = saved["anchorWall"]?.toLongOrNull()
         val savedElapsed = saved["anchorElapsed"]?.toLongOrNull()
         lastTrusted = saved["lastTrusted"]?.toLongOrNull() ?: clock.wallMs()
-        val sameBoot = saved["anchorBoot"]?.toIntOrNull() == anchorBoot &&
+        // BOOT_COUNT 0 = aparelho não informa; sem ele não dá para provar que é o mesmo boot.
+        val sameBoot = anchorBoot != 0 && saved["anchorBoot"]?.toIntOrNull() == anchorBoot &&
             savedWall != null && savedElapsed != null && savedElapsed <= clock.elapsedMs()
         if (sameBoot) {
             anchorWall = savedWall!!

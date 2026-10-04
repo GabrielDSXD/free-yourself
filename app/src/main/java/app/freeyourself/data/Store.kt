@@ -34,7 +34,7 @@ class Store(context: Context) {
 
     /** Preferência salva como texto e exposta como estado do Compose. */
     private fun <T> pref(key: String, default: T, read: (String) -> T): ReadWriteProperty<Any?, T> {
-        val state = mutableStateOf(prefs.getString(key, null)?.let { runCatching { read(it) }.getOrNull() } ?: default)
+        val state = mutableStateOf(prefs.all[key]?.toString()?.let { runCatching { read(it) }.getOrNull() } ?: default)
         return object : ReadWriteProperty<Any?, T> {
             override fun getValue(thisRef: Any?, property: KProperty<*>) = state.value
             override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
