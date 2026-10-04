@@ -1,6 +1,6 @@
-# Margem
+# Free Yourself
 
-App Android que ajuda você a manter a decisão de não consumir conteúdo adulto no celular. Quando algo adulto aparece na tela, o Margem intervém com **fricção progressiva**: primeiro avisos, depois bloqueios curtos do app onde o conteúdo apareceu, cada vez mais longos no mesmo dia. À meia-noite tudo recomeça.
+App Android que ajuda você a manter a decisão de não consumir conteúdo adulto no celular. Quando algo adulto aparece na tela, o Free Yourself intervém com **fricção progressiva**: primeiro avisos, depois bloqueios curtos do app onde o conteúdo apareceu, cada vez mais longos no mesmo dia. À meia-noite tudo recomeça.
 
 ```
 detecção → consciência → aviso → fricção → bloqueio → reflexão → novo começo
@@ -44,7 +44,7 @@ echo "sdk.dir=<caminho do Android SDK>" > local.properties
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Abra o Margem e siga o onboarding. Para ativar a proteção, vá em **Ajustes do Android → Acessibilidade → Apps instalados → Margem**.
+Abra o Free Yourself e siga o onboarding. Para ativar a proteção, vá em **Ajustes do Android → Acessibilidade → Apps instalados → Free Yourself**.
 
 Se o Android disser que a configuração é **restrita** (acontece com apps instalados fora da loja), vá em Informações do app → menu ⋮ → Permitir configurações restritas, e tente de novo.
 
@@ -53,8 +53,8 @@ Se o Android disser que a configuração é **restrita** (acontece com apps inst
 ```bash
 ./gradlew assembleRelease
 # APK sem assinatura em app/build/outputs/apk/release/app-release-unsigned.apk
-keytool -genkeypair -v -keystore margem.jks -alias margem -keyalg RSA -keysize 2048 -validity 10000
-"$ANDROID_HOME/build-tools/<versão>/apksigner" sign --ks margem.jks --out margem.apk app/build/outputs/apk/release/app-release-unsigned.apk
+keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg RSA -keysize 2048 -validity 10000
+"$ANDROID_HOME/build-tools/<versão>/apksigner" sign --ks free-yourself.jks --out free-yourself.apk app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
 ## Testes
@@ -119,11 +119,11 @@ Os dois detectores implementam `ContentDetector`. Para criar um novo método, ba
 | Serviço de acessibilidade (obrigatória) | Ler o texto da janela ativa, tirar screenshots em memória e desenhar os avisos/bloqueios por cima dos apps | Não grava nada, não envia nada, não lê notificações nem senhas (campos de senha não expõem texto) |
 | Notificações (opcional, Android 13+) | Avisar que um bloqueio terminou | Nunca cita o motivo do bloqueio |
 
-O Margem **não declara**: `INTERNET`, sobreposição (`SYSTEM_ALERT_WINDOW`), armazenamento, serviço em primeiro plano ou inicialização no boot. As permissões de serviço em primeiro plano que o LiteRT declara são removidas no manifest.
+O Free Yourself **não declara**: `INTERNET`, sobreposição (`SYSTEM_ALERT_WINDOW`), armazenamento, serviço em primeiro plano ou inicialização no boot. As permissões de serviço em primeiro plano que o LiteRT declara são removidas no manifest.
 
 ## Privacidade
 
-> O conteúdo da tela é analisado no próprio aparelho, em memória, e descartado em seguida. O Margem não grava capturas, imagens, sites ou textos: guarda só os contadores de cada dia. O app não tem permissão de acesso à internet, então nada pode ser enviado.
+> O conteúdo da tela é analisado no próprio aparelho, em memória, e descartado em seguida. O Free Yourself não grava capturas, imagens, sites ou textos: guarda só os contadores de cada dia. O app não tem permissão de acesso à internet, então nada pode ser enviado.
 
 O que fica salvo em SharedPreferences privadas, sem backup na nuvem (`allowBackup=false`):
 - Contadores dos últimos 7 dias (avisos, bloqueios, tempo bloqueado).

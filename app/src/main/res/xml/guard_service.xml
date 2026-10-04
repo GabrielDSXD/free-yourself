@@ -6,4 +6,4 @@
     android:canTakeScreenshot="true"
     android:description="@string/service_description"
     android:notificationTimeout="300"
-    android:settingsActivity="app.margem.ui.MainActivity" />
+    android:settingsActivity="app.freeyourself.ui.MainActivity" />

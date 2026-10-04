@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Margem</string>
-    <string name="service_description">Analisa no próprio aparelho o que aparece na tela para avisar e bloquear conteúdo adulto. Nada é gravado e nada é enviado: o Margem não tem acesso à internet.</string>
+    <string name="app_name">Free Yourself</string>
+    <string name="service_description">Analisa no próprio aparelho o que aparece na tela para avisar e bloquear conteúdo adulto. Nada é gravado e nada é enviado: o Free Yourself não tem acesso à internet.</string>
 </resources>

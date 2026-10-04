@@ -1,4 +1,4 @@
-# Margem — lista local. Tudo é comparado depois de normalizar (minúsculas, sem acentos).
+# Free Yourself — lista local. Tudo é comparado depois de normalizar (minúsculas, sem acentos).
 # [domains]: host exato ou subdomínio. [host-tokens]: trecho em qualquer host.
 # [terms]: palavra/expressão inteira no texto. Termos ambíguos (sexo, nude) ficam de fora.
 

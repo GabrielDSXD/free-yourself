@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    namespace = "app.margem"
+    namespace = "app.freeyourself"
     compileSdk = 37
     defaultConfig {
-        applicationId = "app.margem"
+        applicationId = "app.freeyourself"
         minSdk = 30
         targetSdk = 36
         versionCode = 1
