@@ -1,8 +1,17 @@
+<!-- Corrente com o elo do meio partido. Desenhada na horizontal e girada -35° em torno do centro. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="6"
-        android:pathData="M54,32a22,22 0,1 1,0 44a22,22 0,1 1,0 -44z" />
-    <path android:fillColor="#FFFFFF"
-        android:pathData="M54,48a6,6 0,1 1,0 12a6,6 0,1 1,0 -12z" />
+    <group android:rotation="-35" android:pivotX="54" android:pivotY="54">
+        <path android:fillColor="#00000000" android:strokeColor="#12161D" android:strokeWidth="5"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M31,47 H39 A7,7 0 0 1 39,61 H31 A7,7 0 0 1 31,47 Z
+                M69,47 H77 A7,7 0 0 1 77,61 H69 A7,7 0 0 1 69,47 Z
+                M49,49 H44 A5,5 0 0 0 44,59 H49
+                M59,49 H64 A5,5 0 0 1 64,59 H59" />
+        <path android:fillColor="#00000000" android:strokeColor="#12161D" android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M54,41 V36 M58.4,41.8 L60.2,37.1 M49.6,41.8 L47.8,37.1
+                M54,67 V72 M58.4,66.2 L60.2,70.9 M49.6,66.2 L47.8,70.9" />
+    </group>
 </vector>
