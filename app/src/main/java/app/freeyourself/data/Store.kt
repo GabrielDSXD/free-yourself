@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import app.freeyourself.core.Policy
 import app.freeyourself.core.Sensitivity
+import app.freeyourself.dns.DnsProvider
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.time.Duration.Companion.minutes
@@ -22,6 +23,7 @@ class Store(context: Context) {
     var maxBlockMin by pref("maxBlockMin", 120, String::toInt)
     var sensitivity by pref("sensitivity", Sensitivity.MEDIUM, Sensitivity::valueOf)
     var theme by pref("theme", ThemeMode.SYSTEM, ThemeMode::valueOf)
+    var dnsProvider by pref("dnsProvider", DnsProvider.CLEANBROWSING, DnsProvider::valueOf)
 
     fun policy() = Policy(initialBlock = initialBlockSec.seconds, maxBlock = maxBlockMin.minutes)
 

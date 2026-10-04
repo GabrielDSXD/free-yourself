@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Só para ler qual DNS privado o sistema usa (status do filtro). Não dá acesso à internet. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- O LiteRT declara estas para baixar modelos; o Free Yourself empacota o modelo e não precisa delas. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />

@@ -71,6 +71,7 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 | `PolicyTest` | Avisos sem bloqueio; 4ª → 30 s, 5ª → 1 min, 6ª → 2 min; crescimento; teto nunca ultrapassado; limiares de sensibilidade |
 | `GuardTest` | Contador 1→2→3; progressão; bloqueio ativo não conta de novo; carência e retorno; **reset `2026-10-04 23:59` (tentativa 8) → `2026-10-05 00:01` (contador 0)**; bloqueio que atravessa a meia-noite; **recuperação após matar o processo e após reboot**; **relógio adiantado/atrasado** sem reset nem bloqueio encurtado; fuso para oeste; teto; ajuste mudado no meio do dia; estado corrompido; histórico com lacunas |
 | `UrlDetectorTest` | Domínios e subdomínios; palavras soltas e buscas **não** disparam ("nsfw", "pornô", `google.com/search?q=…`); falsos positivos ("Essex", "CPF xxx.xxx"); IDs de barra de endereço dos navegadores |
+| `DnsFilterTest` | Status do filtro de DNS: sem rede, desligado, CleanBrowsing/Cloudflare reconhecidos (sem diferenciar maiúsculas), outro DNS privado |
 | `FormatTest` | Durações, contador regressivo, textos do painel, dias da semana em pt-BR |
 | `ImageDetectorTest` (aparelho) | Modelo carrega, saída tem 5 probabilidades, tela neutra não é adulta (com bitmap `HARDWARE`, como no screenshot real) |
 
@@ -112,6 +113,11 @@ Os dois detectores implementam `ContentDetector`. Para criar um novo método, ba
 - Sensibilidade: Baixa `porn+hentai ≥ 0,85` · Média `≥ 0,70` · Alta `porn+hentai+0,5·sexy ≥ 0,60`.
 - Janelas protegidas (FLAG_SECURE, como apps de banco) recusam o screenshot. Nesses casos vale só o endereço, quando é um navegador.
 
+**Filtro de sites por DNS** (opcional, nos Ajustes)
+- Usa o **DNS privado** nativo do Android (DNS-over-TLS, Android 9+) apontado para um filtro público: CleanBrowsing Adulto (`adult-filter-dns.cleanbrowsing.org`, padrão; força a busca segura no Google/Bing) ou Cloudflare Família (`family.cloudflare-dns.com`, adulto + malware).
+- Vale para o aparelho inteiro, todos os apps, sem VPN e sem bateria extra. Enxerga só o domínio, não o conteúdo: as imagens continuam com o `ImageDetector`.
+- O app não consegue ativar o DNS privado sozinho: o botão "Ativar no Android" copia o hostname e abre "Rede e internet"; o status (lido de `LinkProperties.privateDnsServerName`) atualiza ao voltar.
+
 **Bateria**: cada inferência custa ~30–60 ms de CPU. A medição real no aparelho (`dumpsys batterystats`) ainda está **pendente**: será registrada aqui depois da sessão de validação no dispositivo.
 
 ## Permissões
@@ -120,6 +126,7 @@ Os dois detectores implementam `ContentDetector`. Para criar um novo método, ba
 |---|---|---|
 | Serviço de acessibilidade (obrigatória) | Ler a barra de endereço dos navegadores, tirar screenshots em memória e desenhar os avisos/bloqueios por cima dos apps | Não grava nada, não envia nada, não lê notificações nem senhas (campos de senha não expõem texto) |
 | Notificações (opcional, Android 13+) | Avisar que um bloqueio terminou | Nunca cita o motivo do bloqueio |
+| Estado da rede (`ACCESS_NETWORK_STATE`, normal, sem pedido ao usuário) | Ler qual DNS privado o sistema está usando, para mostrar o status do filtro | Não dá acesso à internet; não lê o tráfego nem os sites visitados |
 
 O Free Yourself **não declara**: `INTERNET`, sobreposição (`SYSTEM_ALERT_WINDOW`), armazenamento, serviço em primeiro plano ou inicialização no boot. As permissões de serviço em primeiro plano que o LiteRT declara são removidas no manifest.
 
@@ -132,6 +139,8 @@ O que fica salvo em SharedPreferences privadas, sem backup na nuvem (`allowBacku
 - Os ajustes.
 - O bloqueio ativo (pacote do app e horário de término). É apagado quando o bloqueio termina.
 
+**Filtro de DNS:** quando você ativa o DNS privado, é o Android (não o Free Yourself) que passa a enviar as consultas de endereço ao provedor escolhido. Esse provedor fica sabendo quais domínios o aparelho consulta, como acontece com qualquer DNS. O app só lê o nome do servidor configurado.
+
 ## Limitações da plataforma
 
 - **Só Android 11+.** `takeScreenshot` para serviços de acessibilidade existe a partir da API 30.
@@ -139,6 +148,7 @@ O que fica salvo em SharedPreferences privadas, sem backup na nuvem (`allowBacku
 - **O usuário pode desativar o serviço** nos ajustes do Android a qualquer momento. Não há "modo estrito": seria uma barreira contra a própria pessoa e é a parte mais sensível das políticas da Play Store.
 - **Janelas FLAG_SECURE** não são capturadas. Nelas só o texto é analisado.
 - **A imagem é avaliada como tela inteira.** Miniaturas pequenas num feed se diluem e podem passar. Evolução: recortar pelos limites das imagens que a árvore de acessibilidade já informa.
+- **DNS privado**: o usuário pode desligá-lo nos ajustes do Android, e navegadores com "DNS seguro" próprio configurado manualmente (ex.: Chrome com um provedor escolhido) o ignoram. Ele só enxerga domínios.
 - **Picture-in-picture**: ao tocar "Ir para o início" durante um bloqueio, players com PiP automático podem continuar o vídeo numa janela flutuante. O bloqueio pede o foco de áudio, e a maioria dos players pausa, mas o PiP em si não é coberto.
 - **Mudar o relógio e reiniciar o aparelho** burla o reset diário. Fechar essa brecha exigiria hora de rede, o que conflita com "sem internet".
 - **Play Store**: o uso de AccessibilityService para fins que não são de acessibilidade exige declaração e revisão do Google.

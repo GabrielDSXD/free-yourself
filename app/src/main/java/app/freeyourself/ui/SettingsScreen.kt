@@ -65,10 +65,12 @@ fun SettingsScreen(resumes: Int) {
         StatRow("Análise de imagens", when {
             !enabled -> "Desligada"
             GuardService.imageStatus.value == ImageStatus.READY -> "Ativa"
-            GuardService.imageStatus.value == ImageStatus.FAILED -> "Indisponível (só texto)"
+            GuardService.imageStatus.value == ImageStatus.FAILED -> "Indisponível (só endereços)"
             else -> "Carregando"
         })
         Text("Tudo é analisado no próprio aparelho.", style = MaterialTheme.typography.bodyMedium, color = muted)
+
+        DnsSection(resumes)
 
         SectionTitle("Geral")
         Options(
