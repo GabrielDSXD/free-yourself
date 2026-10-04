@@ -6,8 +6,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class TextDetectorTest {
-    private val detector = TextDetector(File("src/main/assets/blocklist.txt").readText())
+class UrlDetectorTest {
+    private val detector = UrlDetector(File("src/main/assets/blocklist.txt").readText())
 
     @Test fun detectsKnownDomainsAndSubdomains() {
         assertTrue(detector.matches("https://www.pornhub.com/view_video.php"))
@@ -22,11 +22,13 @@ class TextDetectorTest {
         assertTrue(detector.matches("redgifs.com/watch/x"))
     }
 
-    @Test fun detectsSearchesAndExplicitTerms() {
-        assertTrue(detector.matches("google.com/search?q=videos+porno"))
-        assertTrue(detector.matches("Pornô grátis"))
-        assertTrue(detector.matches("Watch HENTAI online"))
-        assertTrue(detector.matches("sexo explícito"))
+    /** Qualquer pessoa consegue mandar uma palavra; só um site adulto aberto conta. */
+    @Test fun looseWordsNeverMatch() {
+        val words = listOf(
+            "nsfw", "Pornô grátis", "sexo explícito", "Watch HENTAI online", "rule34",
+            "google.com/search?q=videos+porno", "www.google.com/search?q=nsfw",
+        )
+        words.forEach { assertFalse(it, detector.matches(it)) }
     }
 
     @Test fun ignoresAmbiguousText() {
@@ -40,5 +42,18 @@ class TextDetectorTest {
 
     @Test fun normalizesAccentsAndCase() {
         assertEquals("porno explicito", normalize("PORNÔ Explícito"))
+    }
+
+    @Test fun recognizesBrowserAddressBars() {
+        listOf(
+            "com.android.chrome:id/url_bar",
+            "org.mozilla.firefox:id/mozac_browser_toolbar_url_view",
+            "com.sec.android.app.sbrowser:id/location_bar_edit_text",
+            "com.duckduckgo.mobile.android:id/omnibarTextInput",
+            "com.opera.browser:id/url_field",
+            "com.microsoft.emmx:id/url_bar",
+        ).forEach { assertTrue(it, isAddressBarId(it)) }
+        listOf(null, "com.android.chrome:id/search_box_text", "com.android.chrome:id/title", "com.whatsapp:id/message_text")
+            .forEach { assertFalse("$it", isAddressBarId(it)) }
     }
 }

@@ -95,7 +95,8 @@ private fun AccessibilityStep(resumes: Int) {
     Page(
         "Ative a proteção",
         "Para detectar conteúdo, o Free Yourself usa o serviço de acessibilidade do Android. Com ele, o app lê o " +
-            "texto da tela (como o endereço do site) e analisa imagens da tela no próprio aparelho. " +
+            "endereço dos sites abertos no navegador e analisa imagens da tela no próprio aparelho. " +
+            "Mensagens e textos não são lidos. " +
             "Nada é gravado e nada é enviado.",
     )
     Spacer(Modifier.height(24.dp))

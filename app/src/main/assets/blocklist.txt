@@ -1,6 +1,6 @@
 # Free Yourself — lista local. Tudo é comparado depois de normalizar (minúsculas, sem acentos).
 # [domains]: host exato ou subdomínio. [host-tokens]: trecho em qualquer host.
-# [terms]: palavra/expressão inteira no texto. Termos ambíguos (sexo, nude) ficam de fora.
+# Só endereços: palavras soltas não contam (qualquer pessoa poderia escrevê-las para você).
 
 [domains]
 beeg.com
@@ -169,33 +169,3 @@ livejasmin
 onlyfans
 rule34
 nsfw
-
-[terms]
-porn
-porno
-pornos
-pornografia
-pornography
-pornographic
-hentai
-nsfw
-rule34
-rule 34
-sextape
-sex tape
-sex video
-sex videos
-video porno
-videos porno
-filme porno
-filmes porno
-sexo explicito
-explicit sex
-xxx video
-xxx videos
-nudes vazados
-nude leaks
-onlyfans leak
-onlyfans leaks
-camgirl
-cam girl
