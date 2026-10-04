@@ -64,6 +64,8 @@ keytool -genkeypair -v -keystore margem.jks -alias margem -keyalg RSA -keysize 2
 ./gradlew connectedDebugAndroidTest  # no aparelho conectado
 ```
 
+> `connectedDebugAndroidTest` **desinstala o app** ao terminar (inclusive contadores e a ativação do serviço). Rode-o antes de instalar o APK para uso, ou reinstale e reative a proteção depois.
+
 | Suíte | Cobre |
 |---|---|
 | `PolicyTest` | Avisos sem bloqueio; 4ª → 30 s, 5ª → 1 min, 6ª → 2 min; crescimento; teto nunca ultrapassado; limiares de sensibilidade |
