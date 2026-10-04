@@ -156,13 +156,17 @@ class GuardService : AccessibilityService() {
         }
     }
 
-    /** Texto da barra de endereço, achada pelo ID da view (exige flagReportViewIds). */
+    /**
+     * Texto da barra de endereço, achada pelo ID da view (exige flagReportViewIds). Só vale nó com
+     * texto: o Chrome envolve o campo `url_bar` num contêiner `location_bar` vazio.
+     */
     private fun addressBarText(root: AccessibilityNodeInfo): String? {
         val stack = ArrayDeque<AccessibilityNodeInfo>().apply { add(root) }
         var visited = 0
         while (stack.isNotEmpty() && visited++ < 300) {
             val node = stack.removeLast()
-            if (isAddressBarId(node.viewIdResourceName)) return node.text?.toString()
+            val text = node.text
+            if (!text.isNullOrEmpty() && isAddressBarId(node.viewIdResourceName)) return text.toString()
             for (i in node.childCount - 1 downTo 0) node.getChild(i)?.let(stack::add)
         }
         return null
