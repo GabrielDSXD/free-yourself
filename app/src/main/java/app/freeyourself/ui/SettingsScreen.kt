@@ -61,11 +61,10 @@ fun SettingsScreen(resumes: Int) {
             },
             style = MaterialTheme.typography.bodyMedium, color = muted,
         )
-        StatRow("Endereços de sites", if (enabled) "Ativo" else "Desligado")
         StatRow("Análise de imagens", when {
             !enabled -> "Desligada"
             GuardService.imageStatus.value == ImageStatus.READY -> "Ativa"
-            GuardService.imageStatus.value == ImageStatus.FAILED -> "Indisponível (só endereços)"
+            GuardService.imageStatus.value == ImageStatus.FAILED -> "Indisponível"
             else -> "Carregando"
         })
         Text("Tudo é analisado no próprio aparelho.", style = MaterialTheme.typography.bodyMedium, color = muted)

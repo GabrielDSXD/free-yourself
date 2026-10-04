@@ -94,9 +94,8 @@ private fun AccessibilityStep(resumes: Int) {
     val enabled = remember(resumes) { isServiceEnabled(context) }
     Page(
         "Ative a proteção",
-        "Para detectar conteúdo, o Free Yourself usa o serviço de acessibilidade do Android. Com ele, o app lê o " +
-            "endereço dos sites abertos no navegador e analisa imagens da tela no próprio aparelho. " +
-            "Mensagens e textos não são lidos. " +
+        "Para detectar conteúdo, o Free Yourself usa o serviço de acessibilidade do Android. Com ele, o app " +
+            "analisa as imagens da tela no próprio aparelho. Mensagens e textos não são lidos. " +
             "Nada é gravado e nada é enviado.",
     )
     Spacer(Modifier.height(24.dp))

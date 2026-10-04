@@ -7,11 +7,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
@@ -19,7 +17,6 @@ import android.os.SystemClock
 import android.telecom.TelecomManager
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
-import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.runtime.mutableStateOf
 import app.freeyourself.FreeYourself
@@ -27,8 +24,6 @@ import app.freeyourself.R
 import app.freeyourself.core.Decision
 import app.freeyourself.detect.ImageDetector
 import app.freeyourself.detect.ScreenFrame
-import app.freeyourself.detect.UrlDetector
-import app.freeyourself.detect.isAddressBarId
 import app.freeyourself.ui.BlockOverlay
 import app.freeyourself.ui.MainActivity
 import app.freeyourself.ui.WarningOverlay
@@ -36,21 +31,18 @@ import java.util.concurrent.Executors
 
 /**
  * Único ponto de contato com o sistema: lê a tela, decide com o Guard e mostra os overlays.
- * Toda a lógica de estado roda na main thread; leitura da árvore, screenshot e inferência vão para [worker].
+ * Toda a lógica de estado roda na main thread; screenshot e inferência vão para [worker].
  */
 class GuardService : AccessibilityService() {
     private val main = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
     private lateinit var overlay: Overlay
-    private lateinit var urls: UrlDetector
     @Volatile private var image: ImageDetector? = null
 
     /** Janelas de outros pacotes que aparecem por cima sem trocar o app em primeiro plano. */
     private var passthrough = emptySet<String>()
     /** Apps que nunca analisamos (nem bloqueamos): o próprio, launcher, telefone. */
     private var skipped = emptySet<String>()
-    /** Apps que abrem links: os únicos com barra de endereço a conferir. */
-    private var browsers = emptySet<String>()
     private var foreground: String? = null
     private var shownBlock: String? = null
     private var lastShot = 0L
@@ -68,7 +60,6 @@ class GuardService : AccessibilityService() {
     override fun onServiceConnected() {
         FreeYourself.init(this)
         overlay = Overlay(this)
-        urls = UrlDetector(assets.open("blocklist.txt").bufferedReader().use { it.readText() })
         val imes = getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.packageName }
         // Barra de notificações, teclados e diálogos do sistema aparecem por cima sem trocar o app.
         passthrough = setOf(
@@ -80,12 +71,10 @@ class GuardService : AccessibilityService() {
         val phone = listOfNotNull(getSystemService(TelecomManager::class.java).defaultDialerPackage) +
             listOf("com.android.incallui", "com.samsung.android.incallui", "com.android.server.telecom")
         skipped = passthrough + packageName + homes + phone
-        browsers = packageManager.queryIntentActivities(Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com")), PackageManager.MATCH_ALL)
-            .map { it.activityInfo.packageName }.toSet()
         imageStatus.value = ImageStatus.LOADING
         worker.execute {
             val loaded = runCatching { ImageDetector(this) { FreeYourself.store.sensitivity } }.getOrNull()
-            image = loaded                                     // se falhar, segue só com texto
+            image = loaded
             main.post { imageStatus.value = if (loaded != null) ImageStatus.READY else ImageStatus.FAILED }
         }
         main.post(heartbeat)
@@ -113,7 +102,7 @@ class GuardService : AccessibilityService() {
                 ?.let(::onForeground)
         }
         if (pkg != foreground && (stateChanged || pkg !in passthrough)) seedForeground()
-        if (pkg == foreground && canScan(pkg)) scanText(pkg)
+        if (pkg == foreground && canScan(pkg)) takeShot(pkg)
     }
 
     override fun onInterrupt() {}
@@ -141,36 +130,6 @@ class GuardService : AccessibilityService() {
         }
     }
 
-    /**
-     * Só o endereço do site aberto num navegador conta como texto; mensagens e páginas não são lidas,
-     * então uma palavra que alguém escreva não dispara nada. O resto fica com o detector de imagem.
-     * Percorrer a árvore são chamadas IPC: fica fora da main thread; a decisão volta para ela.
-     */
-    private fun scanText(pkg: String) {
-        if (pkg !in browsers) { takeShot(pkg); return }
-        worker.execute {
-            val root = rootInActiveWindow ?: return@execute
-            if (root.packageName?.toString() != pkg) return@execute
-            val adult = urls.isAdult(ScreenFrame(pkg, text = addressBarText(root)))
-            main.post { if (adult) onDetected(pkg) else takeShot(pkg) }
-        }
-    }
-
-    /**
-     * Texto da barra de endereço, achada pelo ID da view (exige flagReportViewIds). Só vale nó com
-     * texto: o Chrome envolve o campo `url_bar` num contêiner `location_bar` vazio.
-     */
-    private fun addressBarText(root: AccessibilityNodeInfo): String? {
-        val stack = ArrayDeque<AccessibilityNodeInfo>().apply { add(root) }
-        var visited = 0
-        while (stack.isNotEmpty() && visited++ < 300) {
-            val node = stack.removeLast()
-            val text = node.text
-            if (!text.isNullOrEmpty() && isAddressBarId(node.viewIdResourceName)) return text.toString()
-            for (i in node.childCount - 1 downTo 0) node.getChild(i)?.let(stack::add)
-        }
-        return null
-    }
 
     private fun takeShot(pkg: String) {
         val detector = image ?: return

@@ -70,7 +70,6 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 |---|---|
 | `PolicyTest` | Avisos sem bloqueio; 4ª → 30 s, 5ª → 1 min, 6ª → 2 min; crescimento; teto nunca ultrapassado; limiares de sensibilidade |
 | `GuardTest` | Contador 1→2→3; progressão; bloqueio ativo não conta de novo; carência e retorno; **reset `2026-10-04 23:59` (tentativa 8) → `2026-10-05 00:01` (contador 0)**; bloqueio que atravessa a meia-noite; **recuperação após matar o processo e após reboot**; **relógio adiantado/atrasado** sem reset nem bloqueio encurtado; fuso para oeste; teto; ajuste mudado no meio do dia; estado corrompido; histórico com lacunas |
-| `UrlDetectorTest` | Domínios e subdomínios; palavras soltas e buscas **não** disparam ("nsfw", "pornô", `google.com/search?q=…`); falsos positivos ("Essex", "CPF xxx.xxx"); IDs de barra de endereço dos navegadores |
 | `DnsFilterTest` | Status do filtro de DNS: sem rede, desligado, CleanBrowsing/Cloudflare reconhecidos (sem diferenciar maiúsculas), outro DNS privado |
 | `FormatTest` | Durações, contador regressivo, textos do painel, dias da semana em pt-BR |
 | `ImageDetectorTest` (aparelho) | Modelo carrega, saída tem 5 probabilidades, tela neutra não é adulta (com bitmap `HARDWARE`, como no screenshot real) |
@@ -79,7 +78,6 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 
 ```
 GuardService (AccessibilityService): único ponto de integração com o sistema
- ├─ eventos de janela/conteúdo ─► UrlDetector (só a barra de endereço dos navegadores × lista local)
  ├─ throttle ─► takeScreenshot ─► ImageDetector (LiteRT)   [bitmap só em memória]
  ├─ detecção positiva ─► Guard.onDetection(pkg) ─► Warn(n) | Block | Ignore
  └─ Overlay (TYPE_ACCESSIBILITY_OVERLAY; sem permissão de sobreposição)
@@ -88,7 +86,7 @@ GuardService (AccessibilityService): único ponto de integração com o sistema
 | Pacote | Responsabilidade |
 |---|---|
 | `core` | Regras em Kotlin puro, sem Android: `Policy`, `getBlockDuration`, `Guard` (tentativas, bloqueios, reset diário, relógio confiável, serialização) |
-| `detect` | `ContentDetector`/`ScreenFrame` e as duas implementações: `UrlDetector` e `ImageDetector` |
+| `detect` | `ContentDetector`/`ScreenFrame` e o `ImageDetector` |
 | `data` | `Store`: SharedPreferences para o estado do `Guard` e os ajustes |
 | `service` | `GuardService` (eventos, screenshots, decisões, notificação) e `Overlay` (janela Compose sobre os outros apps) |
 | `ui` | Tema, onboarding, telas Hoje/Semana/Ajustes, overlays de aviso e de bloqueio |
@@ -97,21 +95,14 @@ Não há máquina de estados explícita. Os estados IDLE → WARNING_n → BLOCK
 
 ## Detecção
 
-Os dois detectores implementam `ContentDetector`. Para criar um novo método, basta escrever uma nova implementação; o serviço não muda.
+Duas camadas: o **filtro de DNS** impede que sites adultos carreguem, e o **detector de imagem** age sobre o que aparece na tela em qualquer app. Palavras e textos nunca disparam: qualquer pessoa poderia escrevê-los para você. O detector implementa `ContentDetector`; um novo método é uma nova implementação, sem mudar o serviço.
 
-**UrlDetector** (barato, instantâneo)
-- **Palavras nunca disparam.** Qualquer pessoa pode escrever "nsfw" numa mensagem; o app só reage a um site adulto aberto ou a uma imagem adulta na tela.
-- Roda só em navegadores (apps instalados que abrem links `https`), no máximo um evento a cada 500 ms (`notificationTimeout`).
-- Lê apenas a barra de endereço, achada pelo ID da view (`url_bar`, `location_bar`, `omnibar`…; serviço com `flagReportViewIds`). Mensagens, posts e o conteúdo das páginas não são lidos.
-- Extrai só o host e compara com `assets/blocklist.txt` (domínios e trechos de nome de site). Caminho e busca (`?q=…`) não contam.
-- Limites: navegadores embutidos em outros apps (Instagram, por exemplo) não têm o endereço reconhecido, e buscas não disparam; nos dois casos vale o detector de imagem.
-
-**ImageDetector** (pega imagens sem texto)
-- Roda em qualquer app (e nos navegadores quando o endereço não é adulto), no máximo uma vez a cada 2 s, e a cada 5 s enquanto o mesmo app continua aberto (vídeo não gera eventos).
+**ImageDetector**
+- Roda em qualquer app, no máximo uma vez a cada 2 s, e a cada 5 s enquanto o mesmo app continua aberto (vídeo não gera eventos).
 - Nunca roda com a tela desligada ou bloqueada, nem no launcher, no teclado, na System UI ou no próprio app.
 - `AccessibilityService.takeScreenshot` → bitmap reduzido para 224×224 → MobileNetV2 ([nsfw_model](https://github.com/GantMan/nsfw_model)) → 5 probabilidades (drawings, hentai, neutral, porn, sexy). O bitmap é descartado logo em seguida.
 - Sensibilidade: Baixa `porn+hentai ≥ 0,85` · Média `≥ 0,70` · Alta `porn+hentai+0,5·sexy ≥ 0,60`.
-- Janelas protegidas (FLAG_SECURE, como apps de banco) recusam o screenshot. Nesses casos vale só o endereço, quando é um navegador.
+- Janelas protegidas (FLAG_SECURE, como apps de banco) recusam o screenshot.
 
 **Filtro de sites por DNS** (opcional, nos Ajustes)
 - Usa o **DNS privado** nativo do Android (DNS-over-TLS, Android 9+) apontado para um filtro público: CleanBrowsing Adulto (`adult-filter-dns.cleanbrowsing.org`, padrão; força a busca segura no Google/Bing) ou Cloudflare Família (`family.cloudflare-dns.com`, adulto + malware).
@@ -124,7 +115,7 @@ Os dois detectores implementam `ContentDetector`. Para criar um novo método, ba
 
 | Permissão | Para quê | O que **não** faz |
 |---|---|---|
-| Serviço de acessibilidade (obrigatória) | Ler a barra de endereço dos navegadores, tirar screenshots em memória e desenhar os avisos/bloqueios por cima dos apps | Não grava nada, não envia nada, não lê notificações nem senhas (campos de senha não expõem texto) |
+| Serviço de acessibilidade (obrigatória) | Saber qual app está em primeiro plano, tirar screenshots em memória e desenhar os avisos/bloqueios por cima dos apps | Não grava nada, não envia nada, não lê notificações nem senhas (campos de senha não expõem texto) |
 | Notificações (opcional, Android 13+) | Avisar que um bloqueio terminou | Nunca cita o motivo do bloqueio |
 | Estado da rede (`ACCESS_NETWORK_STATE`, normal, sem pedido ao usuário) | Ler qual DNS privado o sistema está usando, para mostrar o status do filtro | Não dá acesso à internet; não lê o tráfego nem os sites visitados |
 
@@ -146,7 +137,7 @@ O que fica salvo em SharedPreferences privadas, sem backup na nuvem (`allowBacku
 - **Só Android 11+.** `takeScreenshot` para serviços de acessibilidade existe a partir da API 30.
 - **Sem iOS.** O iOS não oferece API pública para ler ou capturar a tela de outros apps. O Screen Time bloqueia categorias e domínios, mas não analisa conteúdo.
 - **O usuário pode desativar o serviço** nos ajustes do Android a qualquer momento. Não há "modo estrito": seria uma barreira contra a própria pessoa e é a parte mais sensível das políticas da Play Store.
-- **Janelas FLAG_SECURE** não são capturadas. Nelas só o texto é analisado.
+- **Janelas FLAG_SECURE** (apps de banco, por exemplo) não são capturadas.
 - **A imagem é avaliada como tela inteira.** Miniaturas pequenas num feed se diluem e podem passar. Evolução: recortar pelos limites das imagens que a árvore de acessibilidade já informa.
 - **DNS privado**: o usuário pode desligá-lo nos ajustes do Android, e navegadores com "DNS seguro" próprio configurado manualmente (ex.: Chrome com um provedor escolhido) o ignoram. Ele só enxerga domínios.
 - **Picture-in-picture**: ao tocar "Ir para o início" durante um bloqueio, players com PiP automático podem continuar o vídeo numa janela flutuante. O bloqueio pede o foco de áudio, e a maioria dos players pausa, mas o PiP em si não é coberto.
