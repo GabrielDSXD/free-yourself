@@ -32,6 +32,7 @@ fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit, requireChallenge: (() 
     val enabled = remember(resumes) { isServiceEnabled(context) }
     val notifications = remember(resumes) { context.getSystemService(NotificationManager::class.java).areNotificationsEnabled() }
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val version = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 32.dp)) {
         Text("Ajustes", style = MaterialTheme.typography.headlineMedium)
@@ -101,7 +102,7 @@ fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit, requireChallenge: (() 
 
         SectionTitle("Sobre")
         Text(
-            "Free Yourself 1.0\nModelo de imagem: nsfw_model, de GantMan (licença MIT).\nFonte: Manrope (SIL Open Font License).",
+            "Free Yourself $version\nModelo de imagem: nsfw_model, de GantMan (licença MIT).\nFonte: Manrope (SIL Open Font License).",
             style = MaterialTheme.typography.bodyMedium, color = muted,
         )
     }
