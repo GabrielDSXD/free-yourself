@@ -109,6 +109,8 @@ Duas camadas: o **filtro de DNS** impede que sites adultos carreguem, e o **dete
 - Nunca roda com a tela desligada ou bloqueada, nem no launcher, no teclado, na System UI ou no próprio app.
 - `AccessibilityService.takeScreenshot` → bitmap reduzido para 224×224 → MobileNetV2 ([nsfw_model](https://github.com/GantMan/nsfw_model)) → 5 probabilidades (drawings, hentai, neutral, porn, sexy). O bitmap é descartado logo em seguida.
 - Sensibilidade: Baixa `porn+hentai ≥ 0,85` · Média `≥ 0,80` · Alta `porn+hentai+0,5·sexy ≥ 0,60`.
+- Segundo modelo: quando o primeiro acusa, o [NudeNet](https://github.com/notAI-tech/NudeNet) v3 (YOLOv8, 320×320) procura partes íntimas expostas em 3 quadrados sobrepostos da tela. Só é adulto se os dois concordarem; na Alta, partes cobertas (lingerie) também contam. Rostos, pés, barriga e axilas nunca contam: é o que separa jogos e lutas de anime de conteúdo real.
+- Um quadro positivo isolado não basta: outra captura do mesmo app ~1 s depois precisa confirmar.
 - Janelas protegidas (FLAG_SECURE, como apps de banco) recusam o screenshot.
 
 **Filtro de sites por DNS** (opcional, nos Ajustes)
@@ -162,6 +164,7 @@ O que fica salvo em SharedPreferences privadas, sem backup na nuvem (`allowBacku
 | JUnit 4.13.2 | Testes JVM do núcleo |
 | androidx.test runner 1.7.0 / ext-junit 1.3.0 | O teste instrumentado do modelo |
 | Modelo [nsfw_model](https://github.com/GantMan/nsfw_model) 1.2.0 (MIT) | Classificador NSFW MobileNetV2 já em TFLite; licença em [`third_party/nsfw_model/LICENSE`](third_party/nsfw_model/LICENSE) |
+| Modelo [NudeNet](https://github.com/notAI-tech/NudeNet) v3 320n (AGPL-3.0) | Detector de partes do corpo, convertido de ONNX para TFLite float16 com onnx2tf (6 MB); licença em [`third_party/nudenet/LICENSE`](third_party/nudenet/LICENSE) |
 | Fonte [Manrope](https://github.com/googlefonts/manrope) (OFL) | Tipografia empacotada (sem download); licença em [`third_party/manrope/OFL.txt`](third_party/manrope/OFL.txt) |
 
 Não usados de propósito:
@@ -170,3 +173,7 @@ Não usados de propósito:
 - Navigation: 3 abas resolvem com um `when`.
 - Bibliotecas de serialização: o estado é um mapa chave→texto.
 - Google Fonts para download: o app não tem internet.
+
+## Licença
+
+AGPL-3.0 ([`LICENSE`](LICENSE)), porque o app inclui o modelo NudeNet, que é AGPL-3.0. Quem recebe o APK tem direito ao código-fonte completo, que está neste repositório.

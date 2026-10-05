@@ -102,7 +102,7 @@ fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit, requireChallenge: (() 
 
         SectionTitle("Sobre")
         Text(
-            "Free Yourself $version\nModelo de imagem: nsfw_model, de GantMan (licença MIT).\nFonte: Manrope (SIL Open Font License).",
+            "Free Yourself $version\nModelos de imagem: nsfw_model, de GantMan (MIT), e NudeNet, de notAI-tech (AGPL-3.0).\nFonte: Manrope (SIL Open Font License).",
             style = MaterialTheme.typography.bodyMedium, color = muted,
         )
     }

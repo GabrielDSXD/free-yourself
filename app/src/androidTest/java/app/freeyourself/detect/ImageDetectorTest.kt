@@ -23,6 +23,10 @@ class ImageDetectorTest {
             assertEquals(5, p.size)
             assertEquals(1f, p.sum(), 0.02f)
             assertFalse(detector.isAdult(ScreenFrame("test", bitmap = hardware)))
+            // O NudeNet roda (formato de entrada/saída certo) e não vê nada numa tela lisa, em pé ou deitada.
+            assertFalse(detector.bodyPartsFound(hardware, includeCovered = true))
+            val landscape = Bitmap.createBitmap(2400, 1080, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.DKGRAY) }
+            assertFalse(detector.bodyPartsFound(landscape, includeCovered = true))
         }
     }
 }
