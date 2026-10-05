@@ -23,8 +23,10 @@ import app.freeyourself.isServiceEnabled
 import app.freeyourself.service.GuardService
 import app.freeyourself.service.ImageStatus
 
+/** [requireChallenge]: roda a ação só depois do desafio das frases (usado para afrouxar a proteção). */
 @Composable
-fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit) {
+fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit, requireChallenge: (() -> Unit) -> Unit) {
+    val guarded = { loosens: Boolean, apply: () -> Unit -> if (loosens) requireChallenge(apply) else apply() }
     val store = FreeYourself.store
     val context = LocalContext.current
     val enabled = remember(resumes) { isServiceEnabled(context) }
@@ -37,18 +39,31 @@ fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit) {
         SectionTitle("Proteção")
         ProtectionStatus(resumes, onOpenSetup)
         TextButton(onClick = onOpenSetup) { Text("Ver passo a passo das permissões") }
+        if (enabled) {
+            TextButton(onClick = {
+                requireChallenge { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+            }) { Text("Desativar proteção") }
+        }
 
         SectionTitle("Bloqueio")
-        Options("Primeiro bloqueio", listOf(15 to "15 s", 30 to "30 s", 60 to "1 min"), store.initialBlockSec) { store.initialBlockSec = it }
-        Options("Bloqueio máximo", listOf(30 to "30 min", 60 to "1 h", 120 to "2 h"), store.maxBlockMin) { store.maxBlockMin = it }
+        Options("Primeiro bloqueio", listOf(15 to "15 s", 30 to "30 s", 60 to "1 min"), store.initialBlockSec) { v ->
+            guarded(v < store.initialBlockSec) { store.initialBlockSec = v }
+        }
+        Options("Bloqueio máximo", listOf(30 to "30 min", 60 to "1 h", 120 to "2 h"), store.maxBlockMin) { v ->
+            guarded(v < store.maxBlockMin) { store.maxBlockMin = v }
+        }
         Text(sequenceText(store.policy()), style = MaterialTheme.typography.bodyMedium, color = muted)
+        Text(
+            "Diminuir os tempos, a sensibilidade ou desligar a proteção pelo app pede que você digite algumas frases antes.",
+            style = MaterialTheme.typography.bodyMedium, color = muted,
+        )
 
         SectionTitle("Detecção")
         Options(
             "Sensibilidade",
             listOf(Sensitivity.LOW to "Baixa", Sensitivity.MEDIUM to "Média", Sensitivity.HIGH to "Alta"),
             store.sensitivity,
-        ) { store.sensitivity = it }
+        ) { v -> guarded(v.ordinal < store.sensitivity.ordinal) { store.sensitivity = v } }
         Text(
             when (store.sensitivity) {
                 Sensitivity.LOW -> "Só imagens claramente explícitas."
@@ -65,7 +80,7 @@ fun SettingsScreen(resumes: Int, onOpenSetup: () -> Unit) {
         })
         Text("Tudo é analisado no próprio aparelho.", style = MaterialTheme.typography.bodyMedium, color = muted)
 
-        DnsSection(resumes)
+        DnsSection(resumes, requireChallenge)
 
         SectionTitle("Geral")
         Options(

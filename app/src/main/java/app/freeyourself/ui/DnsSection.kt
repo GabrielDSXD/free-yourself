@@ -38,7 +38,7 @@ fun openPrivateDnsSettings(context: Context, host: String) {
 
 /** Filtro de sites pelo DNS privado do Android: o app guia a ativação e mostra o status. */
 @Composable
-fun DnsSection(resumes: Int) {
+fun DnsSection(resumes: Int, requireChallenge: (() -> Unit) -> Unit) {
     val context = LocalContext.current
     val store = FreeYourself.store
     val status = remember(resumes) { readDnsStatus(context) }
@@ -56,7 +56,9 @@ fun DnsSection(resumes: Int) {
     val host = store.dnsProvider.host
     val action = if (status is DnsStatus.Filtering) "Trocar no Android" else "Ativar no Android"
     val open = { openPrivateDnsSettings(context, host) }
-    if (status is DnsStatus.Filtering) OutlinedButton(onClick = open) { Text(action) } else Button(onClick = open) { Text(action) }
+    // Com o filtro ativo, mexer nele pelo app pede o desafio.
+    if (status is DnsStatus.Filtering) OutlinedButton(onClick = { requireChallenge(open) }) { Text(action) }
+    else Button(onClick = open) { Text(action) }
 
     if (status !is DnsStatus.Filtering) {
         Spacer(Modifier.height(8.dp))

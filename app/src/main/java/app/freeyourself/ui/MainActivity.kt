@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -78,6 +79,12 @@ private fun App(resumes: Int) {
         return
     }
     val openSetup = { setupOpen = true }
+    var challenge by remember { mutableStateOf<(() -> Unit)?>(null) }
+    challenge?.let { action ->
+        ChallengeScreen(onPassed = { challenge = null; action() }, onCancel = { challenge = null })
+        return
+    }
+    val requireChallenge: (() -> Unit) -> Unit = { challenge = it }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
@@ -99,7 +106,7 @@ private fun App(resumes: Int) {
             when (tab) {
                 Tab.Today -> TodayScreen(resumes, openSetup)
                 Tab.Week -> WeekScreen()
-                Tab.Settings -> SettingsScreen(resumes, openSetup)
+                Tab.Settings -> SettingsScreen(resumes, openSetup, requireChallenge)
             }
         }
     }

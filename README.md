@@ -31,6 +31,8 @@ Tudo roda no aparelho. O app **não tem permissão de acesso à internet**.
 - **Reset diário**: à meia-noite local, contadores e nível voltam ao início. Um bloqueio que esteja em andamento termina normalmente.
 - **Relógio**: alterar a hora do aparelho não zera o dia nem encurta bloqueios. O tempo é ancorado no relógio monotônico do sistema (veja Limitações).
 
+**Desafio para afrouxar a proteção:** pelo próprio app, baixar a sensibilidade, encurtar os tempos de bloqueio, mexer no filtro de DNS ativo ou usar "Desativar proteção" exige digitar 7 frases, uma por vez (`core/Challenge.kt`, fácil de editar). Maiúsculas, acentos e pontuação são ignorados; a frase precisa estar inteira. Aumentar a proteção nunca pede o desafio. O desafio vale só dentro do app: os Ajustes do Android continuam permitindo desligar ou desinstalar normalmente.
+
 ## Executar localmente
 
 Pré-requisitos:
@@ -74,6 +76,7 @@ keytool -genkeypair -v -keystore free-yourself.jks -alias free-yourself -keyalg 
 | `GuardTest` | Contador 1→2→3; progressão; bloqueio ativo não conta de novo; carência e retorno; **reset `2026-10-04 23:59` (tentativa 8) → `2026-10-05 00:01` (contador 0)**; bloqueio que atravessa a meia-noite; **recuperação após matar o processo e após reboot**; **relógio adiantado/atrasado** sem reset nem bloqueio encurtado; fuso para oeste; teto; ajuste mudado no meio do dia; estado corrompido; histórico com lacunas |
 | `DeviceGuideTest` | Detecção da marca (Samsung, Motorola, Xiaomi/Redmi/POCO, outros); inicialização automática só na Xiaomi; caminhos de menu de cada marca |
 | `BlankFrameTest` | Captura preta (aba anônima) reconhecida mesmo com a barra de status; tema escuro e metade preta não contam |
+| `ChallengeTest` | 7 frases; conferência ignora maiúsculas, acentos, pontuação e espaços; frase incompleta ou com sobra não passa |
 | `DnsFilterTest` | Status do filtro de DNS: sem rede, desligado, CleanBrowsing/Cloudflare reconhecidos (sem diferenciar maiúsculas), outro DNS privado |
 | `FormatTest` | Durações, contador regressivo, textos do painel, dias da semana em pt-BR |
 | `ImageDetectorTest` (aparelho) | Modelo carrega, saída tem 5 probabilidades, tela neutra não é adulta (com bitmap `HARDWARE`, como no screenshot real) |
