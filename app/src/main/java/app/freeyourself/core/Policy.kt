@@ -33,7 +33,8 @@ fun isAdultImage(p: FloatArray, s: Sensitivity): Boolean {
     val explicit = p[1] + p[3]
     return when (s) {
         Sensitivity.LOW -> explicit >= 0.85f
-        Sensitivity.MEDIUM -> explicit >= 0.70f
+        // 0,80: separa quadros de jogo (0,75 medido) de conteúdo explícito real (0,91+ medido).
+        Sensitivity.MEDIUM -> explicit >= 0.80f
         Sensitivity.HIGH -> explicit + 0.5f * p[4] >= 0.60f
     }
 }

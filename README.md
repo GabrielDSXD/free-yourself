@@ -108,7 +108,7 @@ Duas camadas: o **filtro de DNS** impede que sites adultos carreguem, e o **dete
 - Roda em qualquer app, no máximo uma vez a cada 2 s, e a cada 5 s enquanto o mesmo app continua aberto (vídeo não gera eventos).
 - Nunca roda com a tela desligada ou bloqueada, nem no launcher, no teclado, na System UI ou no próprio app.
 - `AccessibilityService.takeScreenshot` → bitmap reduzido para 224×224 → MobileNetV2 ([nsfw_model](https://github.com/GantMan/nsfw_model)) → 5 probabilidades (drawings, hentai, neutral, porn, sexy). O bitmap é descartado logo em seguida.
-- Sensibilidade: Baixa `porn+hentai ≥ 0,85` · Média `≥ 0,70` · Alta `porn+hentai+0,5·sexy ≥ 0,60`.
+- Sensibilidade: Baixa `porn+hentai ≥ 0,85` · Média `≥ 0,80` · Alta `porn+hentai+0,5·sexy ≥ 0,60`.
 - Janelas protegidas (FLAG_SECURE, como apps de banco) recusam o screenshot.
 
 **Filtro de sites por DNS** (opcional, nos Ajustes)

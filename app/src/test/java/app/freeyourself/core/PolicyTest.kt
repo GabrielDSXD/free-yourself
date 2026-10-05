@@ -44,4 +44,12 @@ class PolicyTest {
         val neutral = floatArrayOf(0.1f, 0f, 0.8f, 0.05f, 0.05f)
         for (s in Sensitivity.entries) assertFalse(isAdultImage(neutral, s))
     }
+
+    /** Medidos num Galaxy S22: quadro de Call of Duty = 0,75; imagens explícitas reais = 0,91 a 1,00. */
+    @Test fun mediumSeparatesGameFramesFromRealContent() {
+        val callOfDuty = floatArrayOf(0.10f, 0.07f, 0.12f, 0.69f, 0.02f)
+        assertFalse(isAdultImage(callOfDuty, Sensitivity.MEDIUM))
+        val explicit = floatArrayOf(0.00f, 0.01f, 0.04f, 0.95f, 0.00f)
+        assertTrue(isAdultImage(explicit, Sensitivity.MEDIUM))
+    }
 }
