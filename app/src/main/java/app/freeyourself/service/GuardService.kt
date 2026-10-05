@@ -23,6 +23,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.compose.runtime.mutableStateOf
 import app.freeyourself.FreeYourself
 import app.freeyourself.R
+import app.freeyourself.core.Confirmation
 import app.freeyourself.core.Decision
 import app.freeyourself.detect.ImageDetector
 import app.freeyourself.ui.BlockOverlay
@@ -48,6 +49,8 @@ class GuardService : AccessibilityService() {
     /** Apps que abrem links: só neles uma captura preta significa aba anônima / modo privado. */
     private var browsers = emptySet<String>()
     private var blankStreak = 0
+    /** Um positivo só conta se a captura seguinte confirmar (evita quadros isolados de anime/ação). */
+    private val confirmation = Confirmation()
     private var foreground: String? = null
     private var shownBlock: String? = null
     private var lastShot = 0L
@@ -138,10 +141,10 @@ class GuardService : AccessibilityService() {
     }
 
 
-    private fun takeShot(pkg: String) {
+    private fun takeShot(pkg: String, minGapMs: Long = 2_000) {
         val detector = image ?: return
         val now = SystemClock.elapsedRealtime()
-        if (now - lastShot < 2_000 || !getSystemService(PowerManager::class.java).isInteractive) return
+        if (now - lastShot < minGapMs || !getSystemService(PowerManager::class.java).isInteractive) return
         lastShot = now
         takeScreenshot(Display.DEFAULT_DISPLAY, worker, object : TakeScreenshotCallback {
             override fun onSuccess(result: ScreenshotResult) {
@@ -166,9 +169,19 @@ class GuardService : AccessibilityService() {
      */
     private fun onInspected(pkg: String, inspection: ImageDetector.Inspection) {
         when {
-            inspection.adult -> { blankStreak = 0; onDetected(pkg) }
-            pkg in browsers && inspection.blank -> if (++blankStreak >= 2) { blankStreak = 0; showPrivateBlocked(pkg) }
-            else -> blankStreak = 0
+            inspection.adult -> {
+                blankStreak = 0
+                if (confirmation.onFrame(pkg, adult = true, now = SystemClock.elapsedRealtime())) onDetected(pkg)
+                else main.postDelayed({ if (pkg == foreground && canScan(pkg)) takeShot(pkg, minGapMs = 1_000) }, 1_100)
+            }
+            pkg in browsers && inspection.blank -> {
+                confirmation.onFrame(pkg, adult = false, now = SystemClock.elapsedRealtime())
+                if (++blankStreak >= 2) { blankStreak = 0; showPrivateBlocked(pkg) }
+            }
+            else -> {
+                blankStreak = 0
+                confirmation.onFrame(pkg, adult = false, now = SystemClock.elapsedRealtime())
+            }
         }
     }
 
